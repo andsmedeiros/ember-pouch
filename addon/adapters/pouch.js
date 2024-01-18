@@ -390,8 +390,10 @@ export default class PouchAdapter extends RESTAdapter.extend({
   },
 
   findHasMany: async function (store, record, link, rel) {
-    await this._init(store, record.type);
-    let inverse = record.type.inverseFor(rel.key, store);
+    const model = store.modelFor(record.modelName);
+
+    await this._init(store, model);
+    let inverse = model.inverseFor(rel.key, store);
     if (inverse && inverse.kind === 'belongsTo') {
       return this.db.rel.findHasMany(
         camelize(rel.type),
