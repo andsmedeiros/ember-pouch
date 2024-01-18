@@ -1,10 +1,9 @@
 import JSONSerializer from '@ember-data/serializer/json';
 import RESTSerializer from '@ember-data/serializer/rest';
-import { keys as EmberKeys } from '@ember/polyfills';
 
 import { shouldSaveRelationship } from '../utils';
 
-const keys = Object.keys || EmberKeys;
+const { keys } = Object;
 
 var Serializer = RESTSerializer.extend({
   init: function () {
