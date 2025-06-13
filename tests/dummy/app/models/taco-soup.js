@@ -3,5 +3,5 @@ import { Model } from 'ember-pouch';
 
 export default Model.extend({
   flavor: attr('string'),
-  ingredients: hasMany('food-item'),
+  ingredients: hasMany('food-item', { inverse: 'soup', async: true }),
 });

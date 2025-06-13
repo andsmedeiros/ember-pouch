@@ -52,7 +52,7 @@ var Serializer = RESTSerializer.extend({
       json.attachments = Object.assign(
         {},
         json.attachments || {},
-        json[payloadKey]
+        json[payloadKey],
       ); // jshint ignore:line
       json[payloadKey] = keys(json[payloadKey]).reduce((attr, fileName) => {
         attr[fileName] = Object.assign({}, json[payloadKey][fileName]); // jshint ignore:line

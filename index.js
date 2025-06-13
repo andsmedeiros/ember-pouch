@@ -31,7 +31,7 @@ module.exports = {
         Object.prototype.hasOwnProperty.call(env.emberpouch, 'dontsavehasmany')
       ) {
         this.ui.writeWarnLine(
-          'The `dontsavehasmany` flag is no longer needed in `config/environment.js`'
+          'The `dontsavehasmany` flag is no longer needed in `config/environment.js`',
         );
       }
     }

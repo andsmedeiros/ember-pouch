@@ -3,7 +3,7 @@ import { assert } from '@ember/debug';
 import { isEmpty } from '@ember/utils';
 import { all, defer } from 'rsvp';
 import { getOwner } from '@ember/application';
-import { bind } from '@ember/runloop';
+import { registerDestructor } from '@ember/destroyable';
 import { on } from '@ember/object/evented';
 import { classify, camelize } from '@ember/string';
 import { pluralize } from 'ember-inflector';
@@ -43,7 +43,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
     var db = this.db;
     if (db && !this.changes) {
       // only run this once
-      var onChangeListener = bind(this, 'onChange');
+      const onChangeListener = (change) => this.onChange(change);
       this.onChangeListener = onChangeListener;
       this.changes = db.changes({
         since: 'now',
@@ -51,6 +51,9 @@ export default class PouchAdapter extends RESTAdapter.extend({
         returnDocs: false,
       });
       this.changes.on('change', onChangeListener);
+      registerDestructor(this, () =>
+        this.changes.off('change', onChangeListener),
+      );
     }
   },
 
@@ -104,7 +107,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
 
     try {
       store.modelFor(obj.type);
-    } catch (e) {
+    } catch (_error) {
       // The record refers to a model which this version of the application
       // does not have.
       return;
@@ -180,7 +183,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
         'Please add a `rev` attribute of type `string`' +
           ' on the ' +
           modelName +
-          ' model.'
+          ' model.',
       );
     }
 
@@ -247,7 +250,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
               indexPromises.push(
                 self.get('db').createIndex({
                   index: { fields: ['data.' + inverse.name, '_id'] },
-                })
+                }),
               );
               if (options.async) {
                 includeRel = false;
@@ -279,7 +282,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
       this._indexPromises = this._indexPromises.concat(indexPromises);
       return all(indexPromises).then(() => {
         this._indexPromises = this._indexPromises.filter(
-          (x) => !indexPromises.includes(x)
+          (x) => !indexPromises.includes(x),
         );
       });
     }
@@ -333,7 +336,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
       function (key) {
         var dataKey = this._dataKey(key);
         dataSelector[dataKey] = selector[key];
-      }.bind(this)
+      }.bind(this),
     );
 
     return dataSelector;
@@ -358,7 +361,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
           return this._dataKey(value);
         }
         return sortKey;
-      }.bind(this)
+      }.bind(this),
     );
   },
 
@@ -398,7 +401,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
       return this.db.rel.findHasMany(
         camelize(rel.type),
         inverse.name,
-        record.id
+        record.id,
       );
     } else {
       let result = {};
@@ -483,7 +486,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
           recordTypeName +
           "' with id '" +
           id +
-          "' not found."
+          "' not found.",
       );
     else return this._eventuallyConsistent(recordTypeName, id);
   },
@@ -500,7 +503,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
       if (deleted) {
         delete this.waitingForConsistency[pouchID];
         throw new Error(
-          "Document of type '" + type + "' with id '" + id + "' is deleted."
+          "Document of type '" + type + "' with id '" + id + "' is deleted.",
         );
       } else if (deleted === null) {
         return defered.promise;

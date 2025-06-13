@@ -55,7 +55,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
         assert.strictEqual(
           soupB.get('flavor'),
           'black bean',
-          'the loaded instance should reflect the initial test data'
+          'the loaded instance should reflect the initial test data',
         );
 
         return this.db().get('tacoSoup_2_B');
@@ -70,7 +70,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
           assert.strictEqual(
             alreadyLoadedSoupB.get('flavor'),
             'carnitas',
-            'the loaded instance should automatically reflect the change in the database'
+            'the loaded instance should automatically reflect the change in the database',
           );
         }, 100);
       })
@@ -86,7 +86,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
         assert.strictEqual(
           this.store().peekRecord('taco-soup', 'A'),
           null,
-          'test setup: record should not be loaded already'
+          'test setup: record should not be loaded already',
         );
 
         return this.db().get('tacoSoup_2_A');
@@ -100,7 +100,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
           assert.strictEqual(
             this.store().peekRecord('taco-soup', 'A'),
             null,
-            'the corresponding instance should still not be loaded'
+            'the corresponding instance should still not be loaded',
           );
         }, 15);
       })
@@ -116,7 +116,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
         assert.strictEqual(
           this.store().peekRecord('taco-soup', 'C'),
           null,
-          'test setup: record should not be loaded already'
+          'test setup: record should not be loaded already',
         );
 
         return this.db().put({
@@ -129,7 +129,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
           assert.strictEqual(
             this.store().peekRecord('taco-soup', 'C'),
             null,
-            'the corresponding instance should still not be loaded'
+            'the corresponding instance should still not be loaded',
           );
         }, 15);
       })
@@ -151,7 +151,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
         assert.strictEqual(
           soupB.get('flavor'),
           'black bean',
-          'the loaded instance should reflect the initial test data'
+          'the loaded instance should reflect the initial test data',
         );
         return this.db().get('tacoSoup_2_B');
       })
@@ -162,7 +162,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
         return promiseToRunLater(() => {
           assert.ok(
             initialRecord.get('isDeleted'),
-            'the corresponding instance should now be deleted '
+            'the corresponding instance should now be deleted ',
           );
         }, 100);
       })
@@ -251,14 +251,14 @@ module(
           assert.strictEqual(
             soupB.get('flavor'),
             'black bean',
-            'the loaded instance should reflect the initial test data'
+            'the loaded instance should reflect the initial test data',
           );
         })
         .then(() => {
           assert.strictEqual(
             this.store().peekRecord('taco-salad', 'C'),
             null,
-            'test setup: record should not be loaded already'
+            'test setup: record should not be loaded already',
           );
 
           return this.db().put({
@@ -270,22 +270,22 @@ module(
           return promiseToRunLater(() => {
             var alreadyLoadedSaladC = this.store().peekRecord(
               'taco-salad',
-              'C'
+              'C',
             );
             assert.ok(
               alreadyLoadedSaladC,
-              'the corresponding instance should now be loaded'
+              'the corresponding instance should now be loaded',
             );
             //if (alreadyLoadedSaladC) {
             assert.strictEqual(
               alreadyLoadedSaladC.get('flavor'),
               'sofritas',
-              'the corresponding instance should now be loaded with the right data'
+              'the corresponding instance should now be loaded with the right data',
             );
             //}
           }, 15);
         })
         .finally(done);
     });
-  }
+  },
 );

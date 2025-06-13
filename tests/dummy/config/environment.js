@@ -14,10 +14,7 @@ module.exports = function (environment) {
         // e.g. 'with-controller': true
         'ds-references': true,
       },
-      EXTEND_PROTOTYPES: {
-        // Prevent Ember Data from overriding Date.parse.
-        Date: false,
-      },
+      EXTEND_PROTOTYPES: false,
     },
 
     APP: {

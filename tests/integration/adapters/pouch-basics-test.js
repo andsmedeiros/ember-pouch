@@ -77,19 +77,19 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
         })
         .then((found) => {
           assert.strictEqual(
-            found.get('length'),
+            found.length,
             2,
-            'should have found the two taco soup items only'
+            'should have found the two taco soup items only',
           );
           assert.deepEqual(
-            found.mapBy('id'),
+            found.map(record => record.id),
             ['A', 'B'],
-            'should have extracted the IDs correctly'
+            'should have extracted the IDs correctly',
           );
           assert.deepEqual(
-            found.mapBy('flavor'),
+            found.map(record => record.flavor),
             ['al pastor', 'black bean'],
-            'should have extracted the attributes also'
+            'should have extracted the attributes also',
           );
         })
         .finally(done);
@@ -113,12 +113,12 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             found.get('id'),
             'D',
-            'should have found the requested item'
+            'should have found the requested item',
           );
           assert.deepEqual(
             found.get('flavor'),
             'black bean',
-            'should have extracted the attributes also'
+            'should have extracted the attributes also',
           );
         })
         .finally(done);
@@ -175,17 +175,17 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             found.get('length'),
             5,
-            'should returns all the smashers '
+            'should returns all the smashers ',
           );
           assert.deepEqual(
             found.mapBy('id'),
             ['dk', 'puff', 'link', 'mario', 'pika'],
-            'should have extracted the IDs correctly'
+            'should have extracted the IDs correctly',
           );
           assert.deepEqual(
             found.mapBy('name'),
             ['Donkey Kong', 'Jigglypuff', 'Link', 'Mario', 'Pikachu'],
-            'should have extracted the attributes also'
+            'should have extracted the attributes also',
           );
         })
         .finally(done);
@@ -242,17 +242,17 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             found.get('length'),
             2,
-            'should have found the two smashers'
+            'should have found the two smashers',
           );
           assert.deepEqual(
             found.mapBy('id'),
             ['mario', 'dk'],
-            'should have extracted the IDs correctly'
+            'should have extracted the IDs correctly',
           );
           assert.deepEqual(
             found.mapBy('name'),
             ['Mario', 'Donkey Kong'],
-            'should have extracted the attributes also'
+            'should have extracted the attributes also',
           );
         })
         .finally(done);
@@ -325,7 +325,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             found.get('flavor'),
             'al pastor',
-            'should have found the requested item'
+            'should have found the requested item',
           );
         })
         .finally(done);
@@ -355,7 +355,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             found.get('flavor'),
             'al pastor',
-            'should have found the requested item'
+            'should have found the requested item',
           );
           return found.get('ingredients');
         })
@@ -363,12 +363,12 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.deepEqual(
             foundIngredients.mapBy('id'),
             ['X', 'Y'],
-            'should have found both associated items'
+            'should have found both associated items',
           );
           assert.deepEqual(
             foundIngredients.mapBy('name'),
             ['pineapple', 'pork loin'],
-            'should have fully loaded the associated items'
+            'should have fully loaded the associated items',
           );
         })
         .finally(done);
@@ -389,7 +389,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             found.get('id'),
             'C',
-            'should have found the requested item'
+            'should have found the requested item',
           );
           return found.get('ingredients');
         })
@@ -397,12 +397,12 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.deepEqual(
             foundIngredients.mapBy('id'),
             ['X', 'Y'],
-            'should have found both associated items'
+            'should have found both associated items',
           );
           assert.deepEqual(
             foundIngredients.mapBy('name'),
             ['pineapple', 'pork loin'],
-            'should have fully loaded the associated items'
+            'should have fully loaded the associated items',
           );
         })
         .finally(done);
@@ -427,14 +427,14 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             newDoc.data.flavor,
             'balsamic',
-            'should have saved the attribute'
+            'should have saved the attribute',
           );
 
           var recordInStore = this.store().peekRecord('tacoSoup', 'E');
           assert.strictEqual(
             newDoc._rev,
             recordInStore.get('rev'),
-            'should have associated the ember-data record with the rev for the new record'
+            'should have associated the ember-data record with the rev for the new record',
           );
         })
         .finally(done);
@@ -477,7 +477,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.deepEqual(
             foundIngredients.mapBy('name'),
             ['pineapple'],
-            'should have fully loaded the associated items'
+            'should have fully loaded the associated items',
           );
         })
         .finally(done);
@@ -512,14 +512,14 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             updatedDoc.data.flavor,
             'pork',
-            'should have updated the attribute'
+            'should have updated the attribute',
           );
 
           var recordInStore = this.store().peekRecord('tacoSoup', 'C');
           assert.strictEqual(
             updatedDoc._rev,
             recordInStore.get('rev'),
-            'should have associated the ember-data record with the updated rev'
+            'should have associated the ember-data record with the updated rev',
           );
         })
         .finally(done);
@@ -554,9 +554,9 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
             assert.strictEqual(
               result.status,
               404,
-              'document should no longer exist'
+              'document should no longer exist',
             );
-          }
+          },
         )
         .finally(done);
     });
@@ -613,7 +613,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
               .catch(() => assert.ok(true, 'isDeleted')),
 
             promiseToRunLater(100).then(() =>
-              this.db().bulkDocs([{ _id: 'tacoSoup_2_C', _deleted: true }])
+              this.db().bulkDocs([{ _id: 'tacoSoup_2_C', _deleted: true }]),
             ),
           ];
 
@@ -631,7 +631,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
       let adapter = this.adapter();
       promises.push(
-        adapter._init(this.store(), this.store().modelFor('taco-soup'))
+        adapter._init(this.store(), this.store().modelFor('taco-soup')),
       );
 
       //this tests _init synchronously by design, as re-entry and infitinite loop detection works this way
@@ -639,11 +639,11 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       assert.strictEqual(
         this.adapter()._schema.length,
         2,
-        'should have set all relationships on the schema'
+        'should have set all relationships on the schema',
       );
 
       promises.push(
-        adapter._init(this.store(), this.store().modelFor('taco-soup'))
+        adapter._init(this.store(), this.store().modelFor('taco-soup')),
       );
 
       return all(promises);
@@ -675,7 +675,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
             .then((soup) => {
               assert.ok(
                 !found.belongsTo || found.belongsTo('soup').value() === null,
-                'should set value of belongsTo to null'
+                'should set value of belongsTo to null',
               );
               return soup;
             });
@@ -683,7 +683,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
         .then((soup) => {
           assert.ok(
             soup === null,
-            'deleted soup should have cascaded to a null value for the belongsTo'
+            'deleted soup should have cascaded to a null value for the belongsTo',
           );
         })
         .finally(done);
@@ -717,7 +717,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
             .then((soup) => {
               assert.ok(
                 !found.belongsTo || found.belongsTo('soup').value() === null,
-                'should set value of belongsTo to null'
+                'should set value of belongsTo to null',
               );
               return soup;
             });
@@ -725,7 +725,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
         .then((soup) => {
           assert.ok(
             soup === null,
-            'deleted soup should have cascaded to a null value for the belongsTo'
+            'deleted soup should have cascaded to a null value for the belongsTo',
           );
         })
         .finally(done);
@@ -750,7 +750,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             ingredients.length,
             2,
-            'should be 2 food items initially'
+            'should be 2 food items initially',
           );
 
           let itemToDelete = ingredients.toArray()[0];
@@ -769,12 +769,12 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.strictEqual(
             ingredients.length,
             1,
-            '1 food item should be removed from the relationship'
+            '1 food item should be removed from the relationship',
           );
           assert.strictEqual(
             liveIngredients.length,
             1,
-            '1 food item should be removed from the live relationship'
+            '1 food item should be removed from the live relationship',
           );
         })
         .finally(done);
@@ -795,7 +795,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           assert.expect(2);
           assert.false(
             config.emberPouch.eventuallyConsistent,
-            'eventuallyConsistent is false'
+            'eventuallyConsistent is false',
           );
           let done = assert.async();
 
@@ -806,10 +806,10 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
               .catch(() => {
                 assert.ok(true, 'item is not found');
                 done();
-              })
+              }),
           );
         });
-      }
+      },
     );
   };
 
@@ -824,7 +824,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       () => {
         allTests();
         asyncTests();
-      }
+      },
     );
     module(
       'sync',
@@ -833,7 +833,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
           config.emberPouch.async = false;
         },
       },
-      allTests
+      allTests,
     );
   };
 
@@ -844,7 +844,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
         config.emberPouch.saveHasMany = false;
       },
     },
-    syncAsync
+    syncAsync,
   );
 
   module(
@@ -854,6 +854,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
         config.emberPouch.saveHasMany = true;
       },
     },
-    syncAsync
+    syncAsync,
   );
 });

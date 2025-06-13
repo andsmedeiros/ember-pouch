@@ -1,4 +1,5 @@
 import { Promise, all, resolve } from 'rsvp';
+import { getOwner } from '@ember/owner';
 
 export default function (hooks) {
   hooks.beforeEach(function () {
@@ -11,6 +12,7 @@ export default function (hooks) {
       // manages them). To get the instance that the app is using, we have to
       // go through the store.
       this.adapter = function adapter() {
+        debugger
         return this.store().adapterFor('taco-soup');
       };
 
@@ -28,7 +30,7 @@ export default function (hooks) {
           return all(
             data.indexes.map((index) => {
               return index.ddoc ? db.deleteIndex(index) : resolve();
-            })
+            }),
           );
         });
       })

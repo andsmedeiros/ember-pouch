@@ -60,16 +60,16 @@ module('Integration | Serializer | Attachments', function (hooks) {
             stub: true,
             length: 9,
           },
-          'attachments are placed into the _attachments property of the doc'
+          'attachments are placed into the _attachments property of the doc',
         );
         assert.deepEqual(
           Object.keys(newDoc._attachments).sort(),
           [coverImage.name, photo1.name, photo2.name].sort(),
-          'all attachments are included in the _attachments property of the doc'
+          'all attachments are included in the _attachments property of the doc',
         );
         assert.true(
           'cover_image' in newDoc.data,
-          'respects the mapping provided by the serializer `attrs`'
+          'respects the mapping provided by the serializer `attrs`',
         );
         assert.deepEqual(
           newDoc.data.cover_image,
@@ -78,13 +78,13 @@ module('Integration | Serializer | Attachments', function (hooks) {
               length: 9,
             },
           },
-          'the attribute contains the file name'
+          'the attribute contains the file name',
         );
         assert.strictEqual(
           newDoc.data.cover_image['cover.jpg'].length,
           9,
           'the attribute contains the length to avoid empty length when File objects are ' +
-            'saved and have not been reloaded'
+            'saved and have not been reloaded',
         );
         assert.deepEqual(newDoc.data.photo_gallery, {
           'photo-1.jpg': {},

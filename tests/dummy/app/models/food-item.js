@@ -5,5 +5,5 @@ import { Model } from 'ember-pouch';
 
 export default Model.extend({
   name: attr('string'),
-  soup: belongsTo('taco-soup'),
+  soup: belongsTo('taco-soup', { inverse: 'ingredients', async: true }),
 });

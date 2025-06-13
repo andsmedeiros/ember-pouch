@@ -1,4 +1,5 @@
 import EmberObject from '@ember/object';
+import { getOwner } from '@ember/owner';
 
 import { module, test } from 'qunit';
 
@@ -39,7 +40,7 @@ module('Unit | Transform | attachments', function (hooks) {
   setupTest(hooks);
 
   test('it serializes an attachment', function (assert) {
-    let transform = this.owner.lookup('transform:attachments');
+    let transform = getOwner(this).lookup('transform:attachments');
     assert.strictEqual(transform.serialize(null), null);
     assert.strictEqual(transform.serialize(undefined), null);
     assert.deepEqual(transform.serialize([]), {});
@@ -50,24 +51,24 @@ module('Unit | Transform | attachments', function (hooks) {
     assert.strictEqual(hello, 'hello.txt');
     assert.strictEqual(
       serializedData[hello].content_type,
-      testSerializedData[hello].content_type
+      testSerializedData[hello].content_type,
     );
     assert.strictEqual(
       serializedData[hello].data,
-      testSerializedData[hello].data
+      testSerializedData[hello].data,
     );
 
     let stub = testDeserializedData[1].get('name');
     assert.strictEqual(stub, 'stub.txt');
     assert.strictEqual(
       serializedData[stub].content_type,
-      testSerializedData[stub].content_type
+      testSerializedData[stub].content_type,
     );
     assert.true(serializedData[stub].stub);
   });
 
   test('it deserializes an attachment', function (assert) {
-    let transform = this.owner.lookup('transform:attachments');
+    let transform = getOwner(this).lookup('transform:attachments');
     assert.deepEqual(transform.deserialize(null), []);
     assert.deepEqual(transform.deserialize(undefined), []);
 
@@ -75,37 +76,37 @@ module('Unit | Transform | attachments', function (hooks) {
 
     assert.strictEqual(
       deserializedData[0].get('name'),
-      testDeserializedData[0].get('name')
+      testDeserializedData[0].get('name'),
     );
     assert.strictEqual(
       deserializedData[0].get('content_type'),
-      testDeserializedData[0].get('content_type')
+      testDeserializedData[0].get('content_type'),
     );
     assert.strictEqual(
       deserializedData[0].get('data'),
-      testDeserializedData[0].get('data')
+      testDeserializedData[0].get('data'),
     );
     assert.strictEqual(
       deserializedData[0].get('digest'),
-      testDeserializedData[0].get('digest')
+      testDeserializedData[0].get('digest'),
     );
 
     assert.strictEqual(
       deserializedData[1].get('name'),
-      testDeserializedData[1].get('name')
+      testDeserializedData[1].get('name'),
     );
     assert.strictEqual(
       deserializedData[1].get('content_type'),
-      testDeserializedData[1].get('content_type')
+      testDeserializedData[1].get('content_type'),
     );
     assert.true(deserializedData[1].get('stub'));
     assert.strictEqual(
       deserializedData[1].get('digest'),
-      testDeserializedData[1].get('digest')
+      testDeserializedData[1].get('digest'),
     );
     assert.strictEqual(
       deserializedData[1].get('length'),
-      testDeserializedData[1].get('length')
+      testDeserializedData[1].get('length'),
     );
   });
 });
