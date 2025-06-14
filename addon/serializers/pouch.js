@@ -1,46 +1,32 @@
-import JSONSerializer from '@ember-data/serializer/json';
 import RESTSerializer from '@ember-data/serializer/rest';
+import { getOwner } from '@ember/owner';
 
 import { shouldSaveRelationship } from '../utils';
 
 const { keys } = Object;
 
-var Serializer = RESTSerializer.extend({
-  init: function () {
-    this._super(...arguments);
-  },
-
-  shouldSerializeHasMany: function (snapshot, key, relationship) {
+export default class PouchSerializer extends RESTSerializer {
+  shouldSerializeHasMany(snapshot, key, relationship) {
     let result = shouldSaveRelationship(this, relationship);
     return result;
-  },
+  }
 
-  // This fixes a failure in Ember Data 1.13 where an empty hasMany
-  // was saving as undefined rather than [].
-  serializeHasMany(snapshot, json, relationship) {
-    if (
-      this._shouldSerializeHasMany(snapshot, relationship.key, relationship)
-    ) {
-      this._super.apply(this, arguments);
-
-      const key = relationship.key;
-
-      if (!json[key]) {
-        json[key] = [];
-      }
-    }
-  },
-
-  _isAttachment(attribute) {
-    return ['attachment', 'attachments'].indexOf(attribute.type) !== -1;
-  },
+  #isAttachment(attribute) {
+    return ['attachment', 'attachments'].includes(attribute.type);
+  }
 
   serializeAttribute(snapshot, json, key, attribute) {
-    this._super(snapshot, json, key, attribute);
-    if (this._isAttachment(attribute)) {
+    super.serializeAttribute(snapshot, json, key, attribute);
+
+    if (this.#isAttachment(attribute)) {
       // if provided, use the mapping provided by `attrs` in the serializer
-      var payloadKey = this._getMappedKey(key, snapshot.type);
-      if (payloadKey === key && this.keyForAttribute) {
+      const modelClass = getOwner(this)
+        .lookup('service:store')
+        .modelFor(snapshot.modelName);
+
+      let payloadKey = this.attrs?.[key]?.key ?? this.attrs?.[key] ?? key;
+
+      if (payloadKey === key) {
         payloadKey = this.keyForAttribute(key, 'serialize');
       }
 
@@ -49,38 +35,40 @@ var Serializer = RESTSerializer.extend({
       // of the document.
       // This will conflict with any 'attachments' attr in the model. Suggest that
       // #toRawDoc in relational-pouch should allow _attachments to be specified
-      json.attachments = Object.assign(
-        {},
-        json.attachments || {},
-        json[payloadKey],
-      ); // jshint ignore:line
+      json.attachments = {
+        ...(json.attachments ?? {}),
+        ...json[payloadKey],
+      };
+
       json[payloadKey] = keys(json[payloadKey]).reduce((attr, fileName) => {
-        attr[fileName] = Object.assign({}, json[payloadKey][fileName]); // jshint ignore:line
+        attr[fileName] = { ...json[payloadKey][fileName] };
         delete attr[fileName].data;
         delete attr[fileName].content_type;
         return attr;
       }, {});
     }
-  },
+  }
 
   extractAttributes(modelClass, resourceHash) {
-    let attributes = this._super(modelClass, resourceHash);
-    let modelAttrs = modelClass.attributes;
+    const attributes = super.extractAttributes(modelClass, resourceHash);
+    const modelAttrs = modelClass.attributes;
+
     modelClass.eachTransformedAttribute((key) => {
-      let attribute = modelAttrs.get(key);
-      if (this._isAttachment(attribute)) {
+      const attribute = modelAttrs.get(key);
+      if (this.#isAttachment(attribute)) {
         // put the corresponding _attachments entries from the response into the attribute
-        let fileNames = keys(attributes[key]);
+        const fileNames = keys(attributes[key]);
         fileNames.forEach((fileName) => {
           attributes[key][fileName] = resourceHash.attachments[fileName];
         });
       }
     });
-    return attributes;
-  },
 
-  extractRelationships(modelClass) {
-    let relationships = this._super(...arguments);
+    return attributes;
+  }
+
+  extractRelationships(modelClass, ...args) {
+    const relationships = super.extractRelationships(modelClass, ...args);
 
     modelClass.eachRelationship((key, relationshipMeta) => {
       if (
@@ -93,17 +81,5 @@ var Serializer = RESTSerializer.extend({
     });
 
     return relationships;
-  },
-});
-
-// DEPRECATION: The private method _shouldSerializeHasMany has been promoted to the public API
-// See https://www.emberjs.com/deprecations/ember-data/v2.x/#toc_jsonserializer-shouldserializehasmany
-if (!JSONSerializer.prototype.shouldSerializeHasMany) {
-  Serializer.reopen({
-    _shouldSerializeHasMany(snapshot, key, relationship) {
-      return this.shouldSerializeHasMany(snapshot, key, relationship);
-    },
-  });
+  }
 }
-
-export default Serializer;
