@@ -3,24 +3,14 @@ import { Promise, all } from 'rsvp';
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 
-// import DS from 'ember-data';
 import moduleForIntegration from '../../helpers/module-for-pouch-acceptance';
-
 import config from 'dummy/config/environment';
 
 function promiseToRunLater(timeout) {
   return new Promise((resolve) => {
-    later(() => {
-      resolve();
-    }, timeout);
+    later(() => resolve(), timeout);
   });
 }
-
-//function delayPromise(timeout) {
-//  return function(res) {
-//    return promiseToRunLater(timeout).then(() => res);
-//  }
-//}
 
 function savingHasMany() {
   return config.emberPouch.saveHasMany;
@@ -30,15 +20,11 @@ function getDocsForRelations() {
   let result = [];
 
   let c = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
-  if (savingHasMany()) {
-    c.data.ingredients = ['X', 'Y'];
-  }
+  if (savingHasMany()) c.data.ingredients = ['X', 'Y'];
   result.push(c);
 
   let d = { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } };
-  if (savingHasMany()) {
-    d.data.ingredients = ['Z'];
-  }
+  if (savingHasMany()) d.data.ingredients = ['Z'];
   result.push(d);
 
   result.push({ _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } });
@@ -51,591 +37,395 @@ function getDocsForRelations() {
   return result;
 }
 
-/*
- * Tests basic CRUD behavior for an app using the ember-pouch adapter.
- */
-
 module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
   setupTest(hooks);
   moduleForIntegration(hooks);
 
-  let allTests = function () {
-    test('can find all', function (assert) {
+  function allTests() {
+    test('can find all', async function (assert) {
       assert.expect(3);
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs([
-            { _id: 'tacoSoup_2_A', data: { flavor: 'al pastor' } },
-            { _id: 'tacoSoup_2_B', data: { flavor: 'black bean' } },
-            { _id: 'burritoShake_2_X', data: { consistency: 'smooth' } },
-          ]);
-        })
-        .then(() => {
-          return this.store().findAll('taco-soup');
-        })
-        .then((found) => {
-          assert.strictEqual(
-            found.length,
-            2,
-            'should have found the two taco soup items only',
-          );
-          assert.deepEqual(
-            found.map(record => record.id),
-            ['A', 'B'],
-            'should have extracted the IDs correctly',
-          );
-          assert.deepEqual(
-            found.map(record => record.flavor),
-            ['al pastor', 'black bean'],
-            'should have extracted the attributes also',
-          );
-        })
-        .finally(done);
+      await this.db().bulkDocs([
+        { _id: 'tacoSoup_2_A', data: { flavor: 'al pastor' } },
+        { _id: 'tacoSoup_2_B', data: { flavor: 'black bean' } },
+        { _id: 'burritoShake_2_X', data: { consistency: 'smooth' } },
+      ]);
+
+      const found = await this.store().findAll('taco-soup');
+
+      assert.strictEqual(
+        found.length,
+        2,
+        'should have found the two taco soup items only',
+      );
+      assert.deepEqual(
+        found.map(({ id }) => id),
+        ['A', 'B'],
+        'should have extracted the IDs correctly',
+      );
+      assert.deepEqual(
+        found.map(({ flavor }) => flavor),
+        ['al pastor', 'black bean'],
+        'should have extracted the attributes also',
+      );
     });
 
-    test('can find one', function (assert) {
+    test('can find one', async function (assert) {
       assert.expect(2);
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs([
-            { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
-            { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
-          ]);
-        })
-        .then(() => {
-          return this.store().find('taco-soup', 'D');
-        })
-        .then((found) => {
-          assert.strictEqual(
-            found.get('id'),
-            'D',
-            'should have found the requested item',
-          );
-          assert.deepEqual(
-            found.get('flavor'),
-            'black bean',
-            'should have extracted the attributes also',
-          );
-        })
-        .finally(done);
+      await this.db().bulkDocs([
+        { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
+        { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
+      ]);
+
+      const found = await this.store().findRecord('taco-soup', 'D');
+
+      assert.strictEqual(found.id, 'D', 'should have found the requested item');
+      assert.deepEqual(
+        found.flavor,
+        'black bean',
+        'should have extracted the attributes also',
+      );
     });
 
-    test('can query with sort', function (assert) {
-      assert.expect(3);
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db()
-            .createIndex({
-              index: {
-                fields: ['data.name'],
-              },
-            })
-            .then(() => {
-              return this.db().bulkDocs([
-                {
-                  _id: 'smasher_2_mario',
-                  data: { name: 'Mario', series: 'Mario', debut: 1981 },
-                },
-                {
-                  _id: 'smasher_2_puff',
-                  data: { name: 'Jigglypuff', series: 'Pokemon', debut: 1996 },
-                },
-                {
-                  _id: 'smasher_2_link',
-                  data: { name: 'Link', series: 'Zelda', debut: 1986 },
-                },
-                {
-                  _id: 'smasher_2_dk',
-                  data: { name: 'Donkey Kong', series: 'Mario', debut: 1981 },
-                },
-                {
-                  _id: 'smasher_2_pika',
-                  data: {
-                    name: 'Pikachu',
-                    series: 'Pokemon',
-                    _id: 'pikachu',
-                    debut: 1996,
-                  },
-                },
-              ]);
-            });
-        })
-        .then(() => {
-          return this.store().query('smasher', {
-            filter: { name: { $gt: '' } },
-            sort: ['name'],
-          });
-        })
-        .then((found) => {
-          assert.strictEqual(
-            found.get('length'),
-            5,
-            'should returns all the smashers ',
-          );
-          assert.deepEqual(
-            found.mapBy('id'),
-            ['dk', 'puff', 'link', 'mario', 'pika'],
-            'should have extracted the IDs correctly',
-          );
-          assert.deepEqual(
-            found.mapBy('name'),
-            ['Donkey Kong', 'Jigglypuff', 'Link', 'Mario', 'Pikachu'],
-            'should have extracted the attributes also',
-          );
-        })
-        .finally(done);
-    });
-
-    test('can query multi-field queries', function (assert) {
-      assert.expect(3);
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db()
-            .createIndex({
-              index: {
-                fields: ['data.series', 'data.debut'],
-              },
-            })
-            .then(() => {
-              return this.db().bulkDocs([
-                {
-                  _id: 'smasher_2_mario',
-                  data: { name: 'Mario', series: 'Mario', debut: 1981 },
-                },
-                {
-                  _id: 'smasher_2_puff',
-                  data: { name: 'Jigglypuff', series: 'Pokemon', debut: 1996 },
-                },
-                {
-                  _id: 'smasher_2_link',
-                  data: { name: 'Link', series: 'Zelda', debut: 1986 },
-                },
-                {
-                  _id: 'smasher_2_dk',
-                  data: { name: 'Donkey Kong', series: 'Mario', debut: 1981 },
-                },
-                {
-                  _id: 'smasher_2_pika',
-                  data: {
-                    name: 'Pikachu',
-                    series: 'Pokemon',
-                    _id: 'pikachu',
-                    debut: 1996,
-                  },
-                },
-              ]);
-            });
-        })
-        .then(() => {
-          return this.store().query('smasher', {
-            filter: { series: 'Mario' },
-            sort: [{ series: 'desc' }, { debut: 'desc' }],
-          });
-        })
-        .then((found) => {
-          assert.strictEqual(
-            found.get('length'),
-            2,
-            'should have found the two smashers',
-          );
-          assert.deepEqual(
-            found.mapBy('id'),
-            ['mario', 'dk'],
-            'should have extracted the IDs correctly',
-          );
-          assert.deepEqual(
-            found.mapBy('name'),
-            ['Mario', 'Donkey Kong'],
-            'should have extracted the attributes also',
-          );
-        })
-        .finally(done);
-    });
-
-    test('queryRecord returns null when no record is found', function (assert) {
-      assert.expect(1);
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db()
-            .createIndex({
-              index: {
-                fields: ['data.flavor'],
-              },
-            })
-            .then(() => {
-              return this.db().bulkDocs([
-                {
-                  _id: 'tacoSoup_2_C',
-                  data: { flavor: 'al pastor', ingredients: ['X', 'Y'] },
-                },
-                {
-                  _id: 'tacoSoup_2_D',
-                  data: { flavor: 'black bean', ingredients: ['Z'] },
-                },
-                { _id: 'foodItem_2_X', data: { name: 'pineapple' } },
-                { _id: 'foodItem_2_Y', data: { name: 'pork loin' } },
-                { _id: 'foodItem_2_Z', data: { name: 'black beans' } },
-              ]);
-            });
-        })
-        .then(() => {
-          return this.store().queryRecord('taco-soup', {
-            filter: { flavor: 'all pastor' },
-          });
-        })
-        .then((found) => {
-          assert.strictEqual(found, null, 'should be null');
-          done();
-        })
-        .catch((error) => {
-          assert.ok(false, 'error in test:' + error);
-          done();
-        });
-    });
-
-    test('can query one record', function (assert) {
-      assert.expect(1);
-
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db()
-            .createIndex({
-              index: {
-                fields: ['data.flavor'],
-              },
-            })
-            .then(() => {
-              return this.db().bulkDocs(getDocsForRelations());
-            });
-        })
-        .then(() => {
-          return this.store().queryRecord('taco-soup', {
-            filter: { flavor: 'al pastor' },
-          });
-        })
-        .then((found) => {
-          assert.strictEqual(
-            found.get('flavor'),
-            'al pastor',
-            'should have found the requested item',
-          );
-        })
-        .finally(done);
-    });
-
-    test('can query one associated records', function (assert) {
-      assert.expect(3);
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db()
-            .createIndex({
-              index: {
-                fields: ['data.flavor'],
-              },
-            })
-            .then(() => {
-              return this.db().bulkDocs(getDocsForRelations());
-            });
-        })
-        .then(() => {
-          return this.store().queryRecord('taco-soup', {
-            filter: { flavor: 'al pastor' },
-          });
-        })
-        .then((found) => {
-          assert.strictEqual(
-            found.get('flavor'),
-            'al pastor',
-            'should have found the requested item',
-          );
-          return found.get('ingredients');
-        })
-        .then((foundIngredients) => {
-          assert.deepEqual(
-            foundIngredients.mapBy('id'),
-            ['X', 'Y'],
-            'should have found both associated items',
-          );
-          assert.deepEqual(
-            foundIngredients.mapBy('name'),
-            ['pineapple', 'pork loin'],
-            'should have fully loaded the associated items',
-          );
-        })
-        .finally(done);
-    });
-
-    test('can find associated records', function (assert) {
+    test('can query with sort', async function (assert) {
       assert.expect(3);
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs(getDocsForRelations());
-        })
-        .then(() => {
-          return this.store().find('taco-soup', 'C');
-        })
-        .then((found) => {
-          assert.strictEqual(
-            found.get('id'),
-            'C',
-            'should have found the requested item',
-          );
-          return found.get('ingredients');
-        })
-        .then((foundIngredients) => {
-          assert.deepEqual(
-            foundIngredients.mapBy('id'),
-            ['X', 'Y'],
-            'should have found both associated items',
-          );
-          assert.deepEqual(
-            foundIngredients.mapBy('name'),
-            ['pineapple', 'pork loin'],
-            'should have fully loaded the associated items',
-          );
-        })
-        .finally(done);
+      await this.db().createIndex({ index: { fields: ['data.name'] } });
+      await this.db().bulkDocs([
+        {
+          _id: 'smasher_2_mario',
+          data: { name: 'Mario', series: 'Mario', debut: 1981 },
+        },
+        {
+          _id: 'smasher_2_puff',
+          data: { name: 'Jigglypuff', series: 'Pokemon', debut: 1996 },
+        },
+        {
+          _id: 'smasher_2_link',
+          data: { name: 'Link', series: 'Zelda', debut: 1986 },
+        },
+        {
+          _id: 'smasher_2_dk',
+          data: { name: 'Donkey Kong', series: 'Mario', debut: 1981 },
+        },
+        {
+          _id: 'smasher_2_pika',
+          data: { name: 'Pikachu', series: 'Pokemon', debut: 1996 },
+        },
+      ]);
+
+      const found = await this.store().query('smasher', {
+        filter: { name: { $gt: '' } },
+        sort: ['name'],
+      });
+
+      assert.strictEqual(found.length, 5, 'should returns all the smashers');
+      assert.deepEqual(
+        found.map(({ id }) => id),
+        ['dk', 'puff', 'link', 'mario', 'pika'],
+        'should have extracted the IDs correctly',
+      );
+      assert.deepEqual(
+        found.map(({ name }) => name),
+        ['Donkey Kong', 'Jigglypuff', 'Link', 'Mario', 'Pikachu'],
+        'should have extracted the attributes also',
+      );
     });
 
-    test('create a new record', function (assert) {
-      assert.expect(2);
+    test('can query multi-field queries', async function (assert) {
+      assert.expect(3);
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          var newSoup = this.store().createRecord('taco-soup', {
-            id: 'E',
-            flavor: 'balsamic',
-          });
-          return newSoup.save();
-        })
-        .then(() => {
-          return this.db().get('tacoSoup_2_E');
-        })
-        .then((newDoc) => {
-          assert.strictEqual(
-            newDoc.data.flavor,
-            'balsamic',
-            'should have saved the attribute',
-          );
+      await this.db().createIndex({
+        index: { fields: ['data.series', 'data.debut'] },
+      });
+      await this.db().bulkDocs([
+        {
+          _id: 'smasher_2_mario',
+          data: { name: 'Mario', series: 'Mario', debut: 1981 },
+        },
+        {
+          _id: 'smasher_2_puff',
+          data: { name: 'Jigglypuff', series: 'Pokemon', debut: 1996 },
+        },
+        {
+          _id: 'smasher_2_link',
+          data: { name: 'Link', series: 'Zelda', debut: 1986 },
+        },
+        {
+          _id: 'smasher_2_dk',
+          data: { name: 'Donkey Kong', series: 'Mario', debut: 1981 },
+        },
+        {
+          _id: 'smasher_2_pika',
+          data: { name: 'Pikachu', series: 'Pokemon', debut: 1996 },
+        },
+      ]);
 
-          var recordInStore = this.store().peekRecord('tacoSoup', 'E');
-          assert.strictEqual(
-            newDoc._rev,
-            recordInStore.get('rev'),
-            'should have associated the ember-data record with the rev for the new record',
-          );
-        })
-        .finally(done);
+      const found = await this.store().query('smasher', {
+        filter: { series: 'Mario' },
+        sort: [{ series: 'desc' }, { debut: 'desc' }],
+      });
+
+      assert.strictEqual(found.length, 2, 'should have found the two smashers');
+      assert.deepEqual(
+        found.map(({ id }) => id),
+        ['mario', 'dk'],
+        'should have extracted the IDs correctly',
+      );
+      assert.deepEqual(
+        found.map(({ name }) => name),
+        ['Mario', 'Donkey Kong'],
+        'should have extracted the attributes also',
+      );
     });
 
-    test('creating an associated record stores a reference to it in the parent', function (assert) {
+    test('queryRecord returns null when no record is found', async function (assert) {
       assert.expect(1);
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          var s = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
-          if (savingHasMany()) {
-            s.data.ingredients = [];
-          }
-          return this.db().bulkDocs([s]);
-        })
-        .then(() => {
-          return this.store().findRecord('taco-soup', 'C');
-        })
-        .then((tacoSoup) => {
-          var newIngredient = this.store().createRecord('food-item', {
-            name: 'pineapple',
-            soup: tacoSoup,
-          });
+      await this.db().createIndex({ index: { fields: ['data.flavor'] } });
+      await this.db().bulkDocs([
+        {
+          _id: 'tacoSoup_2_C',
+          data: { flavor: 'al pastor', ingredients: ['X', 'Y'] },
+        },
+        {
+          _id: 'tacoSoup_2_D',
+          data: { flavor: 'black bean', ingredients: ['Z'] },
+        },
+        { _id: 'foodItem_2_X', data: { name: 'pineapple' } },
+        { _id: 'foodItem_2_Y', data: { name: 'pork loin' } },
+        { _id: 'foodItem_2_Z', data: { name: 'black beans' } },
+      ]);
 
-          //tacoSoup.save() actually not needed in !savingHasmany mode, but should still work
-          return newIngredient
-            .save()
-            .then(() => (savingHasMany() ? tacoSoup.save() : tacoSoup));
-        })
-        .then(() => {
-          run(() => this.store().unloadAll());
-          return this.store().findRecord('taco-soup', 'C');
-        })
-        .then((tacoSoup) => {
-          return tacoSoup.get('ingredients');
-        })
-        .then((foundIngredients) => {
-          assert.deepEqual(
-            foundIngredients.mapBy('name'),
-            ['pineapple'],
-            'should have fully loaded the associated items',
-          );
-        })
-        .finally(done);
+      const found = await this.store().queryRecord('taco-soup', {
+        filter: { flavor: 'all pastor' },
+      });
+
+      assert.strictEqual(found, null, 'should be null');
     });
 
-    // This test fails due to a bug in ember data
-    // (https://github.com/emberjs/data/issues/3736)
-    // starting with ED v2.0.0-beta.1. It works again with ED v2.1.0.
-    // if (!DS.VERSION.match(/^2\.0/)) {
-    test('update an existing record', function (assert) {
-      assert.expect(2);
-
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs([
-            { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
-            { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
-          ]);
-        })
-        .then(() => {
-          return this.store().find('taco-soup', 'C');
-        })
-        .then((found) => {
-          found.set('flavor', 'pork');
-          return found.save();
-        })
-        .then(() => {
-          return this.db().get('tacoSoup_2_C');
-        })
-        .then((updatedDoc) => {
-          assert.strictEqual(
-            updatedDoc.data.flavor,
-            'pork',
-            'should have updated the attribute',
-          );
-
-          var recordInStore = this.store().peekRecord('tacoSoup', 'C');
-          assert.strictEqual(
-            updatedDoc._rev,
-            recordInStore.get('rev'),
-            'should have associated the ember-data record with the updated rev',
-          );
-        })
-        .finally(done);
-    });
-    // }
-
-    test('delete an existing record', function (assert) {
+    test('can query one record', async function (assert) {
       assert.expect(1);
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs([
-            { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
-            { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
-          ]);
-        })
-        .then(() => {
-          return this.store().find('taco-soup', 'C');
-        })
-        .then((found) => {
-          return found.destroyRecord();
-        })
-        .then(() => {
-          return this.db().get('tacoSoup_2_C');
-        })
-        .then(
-          (doc) => {
-            assert.notOk(doc, 'document should no longer exist');
-          },
-          (result) => {
-            assert.strictEqual(
-              result.status,
-              404,
-              'document should no longer exist',
-            );
-          },
-        )
-        .finally(done);
-    });
-  };
+      await this.db().createIndex({ index: { fields: ['data.flavor'] } });
+      await this.db().bulkDocs(getDocsForRelations());
 
-  let asyncTests = function () {
-    test('eventually consistency - success', function (assert) {
-      assert.expect(1);
-      assert.timeout(5000);
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs([
-            { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
-            //{_id: 'tacoSoup_2_C', data: { flavor: 'test' } }
-          ]);
-        })
-        .then(() => this.store().findRecord('food-item', 'X'))
-        .then((foodItem) => {
-          let result = [
-            foodItem
-              .get('soup')
-              .then((soup) => assert.strictEqual(soup.id, 'C')),
+      const found = await this.store().queryRecord('taco-soup', {
+        filter: { flavor: 'al pastor' },
+      });
 
-            promiseToRunLater(0).then(() => {
-              return this.db().bulkDocs([
-                { _id: 'tacoSoup_2_C', data: { flavor: 'test' } },
-              ]);
-            }),
-          ];
-
-          return all(result);
-        })
-        .finally(done);
+      assert.strictEqual(
+        found.flavor,
+        'al pastor',
+        'should have found the requested item',
+      );
     });
 
-    test('eventually consistency - deleted', function (assert) {
-      assert.expect(1);
-      assert.timeout(5000);
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs([
-            { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
-            //{_id: 'tacoSoup_2_C', data: { flavor: 'test' } }
-          ]);
-        })
-        .then(() => this.store().findRecord('food-item', 'X'))
-        .then((foodItem) => {
-          let result = [
-            foodItem
-              .get('soup')
-              .then((soup) => assert.strictEqual(soup, null, 'isDeleted'))
-              .catch(() => assert.ok(true, 'isDeleted')),
+    test('can query one associated records', async function (assert) {
+      assert.expect(3);
 
-            promiseToRunLater(100).then(() =>
-              this.db().bulkDocs([{ _id: 'tacoSoup_2_C', _deleted: true }]),
-            ),
-          ];
+      await this.db().createIndex({ index: { fields: ['data.flavor'] } });
+      await this.db().bulkDocs(getDocsForRelations());
 
-          return all(result);
-        })
-        .finally(done);
-    });
+      const found = await this.store().queryRecord('taco-soup', {
+        filter: { flavor: 'al pastor' },
+      });
 
-    test('_init should work', function (assert) {
-      let db = this.db();
-
-      assert.strictEqual(db.rel, undefined, 'should start without schema');
-
-      let promises = [];
-
-      let adapter = this.adapter();
-      promises.push(
-        adapter._init(this.store(), this.store().modelFor('taco-soup')),
+      assert.strictEqual(
+        found.flavor,
+        'al pastor',
+        'should have found the requested item',
       );
 
-      //this tests _init synchronously by design, as re-entry and infitinite loop detection works this way
-      assert.notEqual(db.rel, undefined, '_init should set schema');
+      const foundIngredients = await found.ingredients;
+      assert.deepEqual(
+        foundIngredients.map((item) => item.id),
+        ['X', 'Y'],
+        'should have found both associated items',
+      );
+      assert.deepEqual(
+        foundIngredients.map((item) => item.name),
+        ['pineapple', 'pork loin'],
+        'should have fully loaded the associated items',
+      );
+    });
+
+    test('can find associated records', async function (assert) {
+      assert.expect(3);
+
+      await this.db().bulkDocs(getDocsForRelations());
+
+      const found = await this.store().findRecord('taco-soup', 'C');
+      assert.strictEqual(found.id, 'C', 'should have found the requested item');
+
+      const foundIngredients = await found.ingredients;
+      assert.deepEqual(
+        foundIngredients.map((item) => item.id),
+        ['X', 'Y'],
+        'should have found both associated items',
+      );
+      assert.deepEqual(
+        foundIngredients.map((item) => item.name),
+        ['pineapple', 'pork loin'],
+        'should have fully loaded the associated items',
+      );
+    });
+
+    test('create a new record', async function (assert) {
+      assert.expect(2);
+
+      const newSoup = this.store().createRecord('taco-soup', {
+        id: 'E',
+        flavor: 'balsamic',
+      });
+      await newSoup.save();
+
+      const newDoc = await this.db().get('tacoSoup_2_E');
+      assert.strictEqual(
+        newDoc.data.flavor,
+        'balsamic',
+        'should have saved the attribute',
+      );
+
+      const recordInStore = this.store().peekRecord('taco-soup', 'E');
+      assert.strictEqual(
+        newDoc._rev,
+        recordInStore.rev,
+        'should have associated the rev',
+      );
+    });
+
+    test('creating an associated record stores a reference to it in the parent', async function (assert) {
+      assert.expect(1);
+
+      const s = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
+      if (savingHasMany()) s.data.ingredients = [];
+      await this.db().bulkDocs([s]);
+
+      const tacoSoup = await this.store().findRecord('taco-soup', 'C');
+      const newIngredient = this.store().createRecord('food-item', {
+        name: 'pineapple',
+        soup: tacoSoup,
+      });
+
+      await newIngredient.save();
+      if (savingHasMany()) await tacoSoup.save();
+
+      run(() => this.store().unloadAll());
+      const reloadedTacoSoup = await this.store().findRecord('taco-soup', 'C');
+      const foundIngredients = await reloadedTacoSoup.ingredients;
+
+      assert.deepEqual(
+        foundIngredients.map((item) => item.name),
+        ['pineapple'],
+        'should have fully loaded the associated items',
+      );
+    });
+
+    test('update an existing record', async function (assert) {
+      assert.expect(2);
+
+      await this.db().bulkDocs([
+        { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
+        { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
+      ]);
+
+      const found = await this.store().findRecord('taco-soup', 'C');
+      found.flavor = 'pork';
+      await found.save();
+
+      const updatedDoc = await this.db().get('tacoSoup_2_C');
+      assert.strictEqual(
+        updatedDoc.data.flavor,
+        'pork',
+        'should have updated the attribute',
+      );
+
+      const recordInStore = this.store().peekRecord('taco-soup', 'C');
+      assert.strictEqual(
+        updatedDoc._rev,
+        recordInStore.rev,
+        'should have associated the updated rev',
+      );
+    });
+
+    test('delete an existing record', async function (assert) {
+      assert.expect(1);
+
+      await this.db().bulkDocs([
+        { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
+        { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
+      ]);
+
+      const found = await this.store().findRecord('taco-soup', 'C');
+      await found.destroyRecord();
+
+      try {
+        await this.db().get('tacoSoup_2_C');
+        assert.notOk(true, 'document should no longer exist');
+      } catch (result) {
+        assert.strictEqual(
+          result.status,
+          404,
+          'document should no longer exist',
+        );
+      }
+    });
+  }
+
+  let asyncTests = function () {
+    test('eventually consistency - success', async function (assert) {
+      assert.expect(1);
+      assert.timeout(5000);
+
+      await this.db().bulkDocs([
+        { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
+      ]);
+
+      const foodItem = await this.store().findRecord('food-item', 'X');
+      const [ soup ] = await Promise.all([
+        foodItem.soup,
+        promiseToRunLater(0).then(() =>
+          this.db().bulkDocs([
+            { _id: 'tacoSoup_2_C', data: { flavor: 'test' } },
+          ]),
+        ),
+      ]);
+
+      assert.strictEqual(soup.id, 'C');
+    });
+
+    test('eventually consistency - deleted', async function (assert) {
+      assert.expect(1);
+      assert.timeout(5000);
+
+      await this.db().bulkDocs([
+        { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
+      ]);
+
+      const foodItem = await this.store().findRecord('food-item', 'X');
+
+      await Promise.all([
+        foodItem.soup
+          .then((soup) => assert.strictEqual(soup, null, 'isDeleted'))
+          .catch(() => assert.ok(true, 'isDeleted')),
+        promiseToRunLater(100).then(() =>
+          this.db().bulkDocs([{ _id: 'tacoSoup_2_C', _deleted: true }]),
+        ),
+      ]);
+    });
+
+    test('prepare should work', async function (assert) {
+      const db = this.db();
+      assert.strictEqual(db.rel, undefined, 'should start without schema');
+
+      const adapter = this.adapter();
+      const promises = [
+        adapter.prepare(this.store(), this.store().modelFor('taco-soup')),
+      ];
+
+      assert.notEqual(db.rel, undefined, 'prepare should set schema');
       assert.strictEqual(
         this.adapter()._schema.length,
         2,
@@ -643,141 +433,90 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       );
 
       promises.push(
-        adapter._init(this.store(), this.store().modelFor('taco-soup')),
+        adapter.prepare(this.store(), this.store().modelFor('taco-soup')),
       );
 
-      return all(promises);
+      await Promise.all(promises);
     });
 
-    //TODO: only do this for async or dontsavehasmany?
-    test('delete cascade null', function (assert) {
+    test('delete cascade null', async function (assert) {
+      assert.timeout(5000);
+      assert.expect(1);
+
+      await this.db().bulkDocs(getDocsForRelations());
+      const found = await this.store().findRecord('taco-soup', 'D');
+      await found.destroyRecord();
+
+      this.store().unloadAll();
+      const foodItem = await this.store().findRecord('food-item', 'Z');
+
+      assert.ok(
+        !foodItem.belongsTo || foodItem.belongsTo('soup').value() === null,
+        'should set value of belongsTo to null',
+      );
+    });
+
+    test('remote delete removes belongsTo relationship', async function (assert) {
       assert.timeout(5000);
       assert.expect(2);
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs(getDocsForRelations());
-        })
-        //  .then(() => this.store().findRecord('food-item', 'Z'))//prime ember-data store with Z
-        //  .then(found => found.get('soup'))//prime belongsTo
-        .then(() => this.store().findRecord('taco-soup', 'D'))
-        .then((found) => {
-          return found.destroyRecord();
-        })
-        .then(() => {
-          run(() => this.store().unloadAll()); // normally this would be done by onChange listener
-          return this.store().findRecord('food-item', 'Z'); //Z should be updated now
-        })
-        .then((found) => {
-          return Promise.resolve(found.get('soup'))
-            .catch(() => null)
-            .then((soup) => {
-              assert.ok(
-                !found.belongsTo || found.belongsTo('soup').value() === null,
-                'should set value of belongsTo to null',
-              );
-              return soup;
-            });
-        })
-        .then((soup) => {
-          assert.ok(
-            soup === null,
-            'deleted soup should have cascaded to a null value for the belongsTo',
-          );
-        })
-        .finally(done);
+      await this.db().bulkDocs(getDocsForRelations());
+      const foodItemZ = await this.store().findRecord('food-item', 'Z');
+      const soup = await foodItemZ.soup;
+
+      const id = 'tacoSoup_2_' + soup.id;
+      const promise = this.adapter().waitForChangeWithID(id);
+      this.db().remove(id, soup.rev);
+      await promise;
+
+      const reloadedFoodItem = await this.store().findRecord('food-item', 'Z');
+
+      assert.strictEqual(
+        reloadedFoodItem.belongsTo('soup').value(),
+        null,
+        'should set value of belongsTo to null',
+      );
+
+      assert.strictEqual(
+        await reloadedFoodItem.soup,
+        null,
+        'deleted soup should have cascaded to a null value',
+      );
     });
 
-    test('remote delete removes belongsTo relationship', function (assert) {
-      assert.timeout(5000);
-      assert.expect(2);
-
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs(getDocsForRelations());
-        })
-        .then(() => this.store().findRecord('food-item', 'Z')) //prime ember-data store with Z
-        .then((found) => found.get('soup')) //prime belongsTo
-        .then((found) => {
-          let id = 'tacoSoup_2_' + found.id;
-          let promise = this.adapter().waitForChangeWithID(id);
-
-          this.db().remove(id, found.get('rev'));
-
-          return promise;
-        })
-        .then(() => {
-          return this.store().findRecord('food-item', 'Z'); //Z should be updated now
-        })
-        .then((found) => {
-          return Promise.resolve(found.get('soup'))
-            .catch(() => null)
-            .then((soup) => {
-              assert.ok(
-                !found.belongsTo || found.belongsTo('soup').value() === null,
-                'should set value of belongsTo to null',
-              );
-              return soup;
-            });
-        })
-        .then((soup) => {
-          assert.ok(
-            soup === null,
-            'deleted soup should have cascaded to a null value for the belongsTo',
-          );
-        })
-        .finally(done);
-    });
-
-    test('remote delete removes hasMany relationship', function (assert) {
+    test('remote delete removes hasMany relationship', async function (assert) {
       assert.timeout(5000);
       assert.expect(3);
 
-      let liveIngredients = null;
+      await this.db().bulkDocs(getDocsForRelations());
+      const tacoSoup = await this.store().findRecord('taco-soup', 'C');
+      let liveIngredients = await tacoSoup.ingredients;
 
-      var done = assert.async();
-      Promise.resolve()
-        .then(() => {
-          return this.db().bulkDocs(getDocsForRelations());
-        })
-        .then(() => this.store().findRecord('taco-soup', 'C')) //prime ember-data store with C
-        .then((found) => found.get('ingredients')) //prime hasMany
-        .then((ingredients) => {
-          liveIngredients = ingredients; //save for later
+      assert.strictEqual(
+        liveIngredients.length,
+        2,
+        'should be 2 food items initially',
+      );
 
-          assert.strictEqual(
-            ingredients.length,
-            2,
-            'should be 2 food items initially',
-          );
+      const itemToDelete = liveIngredients[0];
+      const id = 'foodItem_2_' + itemToDelete.id;
+      const promise = this.adapter().waitForChangeWithID(id);
+      this.db().remove(id, itemToDelete.rev);
+      await promise;
 
-          let itemToDelete = ingredients.toArray()[0];
-          let id = 'foodItem_2_' + itemToDelete.id;
-          let promise = this.adapter().waitForChangeWithID(id);
+      const reloadedSoup = await this.store().findRecord('taco-soup', 'C');
+      const updatedIngredients = await reloadedSoup.ingredients;
 
-          this.db().remove(id, itemToDelete.get('rev'));
-
-          return promise;
-        })
-        .then(() => {
-          return this.store().findRecord('taco-soup', 'C'); //get updated soup.ingredients
-        })
-        .then((found) => found.get('ingredients'))
-        .then((ingredients) => {
-          assert.strictEqual(
-            ingredients.length,
-            1,
-            '1 food item should be removed from the relationship',
-          );
-          assert.strictEqual(
-            liveIngredients.length,
-            1,
-            '1 food item should be removed from the live relationship',
-          );
-        })
-        .finally(done);
+      assert.strictEqual(
+        updatedIngredients.length,
+        1,
+        '1 food item should be removed from the relationship',
+      );
+      assert.strictEqual(
+        liveIngredients.length,
+        1,
+        '1 food item should be removed from the live relationship',
+      );
     });
 
     module(
@@ -791,23 +530,19 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
         },
       },
       function () {
-        test('not found', function (assert) {
+        test('not found', async function (assert) {
           assert.expect(2);
           assert.false(
             config.emberPouch.eventuallyConsistent,
             'eventuallyConsistent is false',
           );
-          let done = assert.async();
 
-          Promise.resolve().then(() =>
-            this.store()
-              .findRecord('food-item', 'non-existent')
-              .then(() => assert.ok(false))
-              .catch(() => {
-                assert.ok(true, 'item is not found');
-                done();
-              }),
-          );
+          try {
+            await this.store().findRecord('food-item', 'non-existent');
+            assert.ok(false, 'should not succeed');
+          } catch {
+            assert.ok(true, 'item is not found');
+          }
         });
       },
     );
