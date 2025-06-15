@@ -1,39 +1,32 @@
-import { Promise, all, resolve } from 'rsvp';
 import { getOwner } from '@ember/owner';
 
 export default function (hooks) {
   hooks.beforeEach(function () {
-    return Promise.resolve().then(() => {
-      this.store = function store() {
-        return this.owner.lookup('service:store');
-      };
+    this.store = function store() {
+      return getOwner(this).lookup('service:store');
+    };
 
-      // At the container level, adapters are not singletons (ember-data
-      // manages them). To get the instance that the app is using, we have to
-      // go through the store.
-      this.adapter = function adapter() {
-        debugger
-        return this.store().adapterFor('taco-soup');
-      };
+    // At the container level, adapters are not singletons (ember-data
+    // manages them). To get the instance that the app is using, we have to
+    // go through the store.
+    this.adapter = function adapter() {
+      return this.store().adapterFor('taco-soup');
+    };
 
-      this.db = function db() {
-        return this.adapter().get('db');
-      };
-    });
+    this.db = function db() {
+      return this.adapter().db;
+    };
   });
 
-  hooks.afterEach(function () {
-    let db = this.db();
-    return all(this.adapter()._indexPromises)
-      .then(() => {
-        return db.getIndexes().then((data) => {
-          return all(
-            data.indexes.map((index) => {
-              return index.ddoc ? db.deleteIndex(index) : resolve();
-            }),
-          );
-        });
-      })
-      .then(() => db.destroy());
+  hooks.afterEach(async function () {
+    await Promise.all(this.adapter().indexPromises);
+    const db = this.db();
+
+    const { indexes } = await db.getIndexes();
+    await Promise.all(
+      indexes.filter(({ ddoc }) => ddoc).map((index) => db.deleteIndex(index)),
+    );
+
+    await db.destroy();
   });
 }
