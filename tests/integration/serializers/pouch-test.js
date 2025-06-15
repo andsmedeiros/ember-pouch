@@ -25,8 +25,6 @@ module('Integration | Serializer | Attachments', function (hooks) {
   };
 
   test('puts attachments into the `attachments` property when saving', async function (assert) {
-    assert.expect(11);
-
     const newRecipe = this.store().createRecord('taco-recipe', {
       id,
       coverImage,

@@ -34,8 +34,6 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   });
 
   test('a loaded instance automatically reflects directly-made database changes', async function (assert) {
-    assert.expect(2);
-
     const soupB = await this.store().findRecord('taco-soup', 'B');
     assert.strictEqual(
       soupB.flavor,
@@ -58,8 +56,6 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   });
 
   test('a record that is not loaded stays not loaded when it is changed', async function (assert) {
-    assert.expect(2);
-
     assert.strictEqual(
       this.store().peekRecord('taco-soup', 'A'),
       null,
@@ -80,8 +76,6 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   });
 
   test('a new record is not automatically loaded', async function (assert) {
-    assert.expect(2);
-
     assert.strictEqual(
       this.store().peekRecord('taco-soup', 'C'),
       null,
@@ -103,8 +97,6 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   });
 
   test('a deleted record is automatically marked deleted', async function (assert) {
-    assert.expect(2);
-
     const soupB = await this.store().findRecord('taco-soup', 'B');
     assert.strictEqual(
       soupB.flavor,
@@ -124,8 +116,6 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   });
 
   test('a change to a record with a non-relational-pouch ID does not cause an error', async function (assert) {
-    assert.expect(0);
-
     await this.store().findRecord('taco-soup', 'B');
     await this.db().put({
       _id: '_design/ingredient-use',
@@ -133,8 +123,6 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   });
 
   test('a change to a record of an unknown type does not cause an error', async function (assert) {
-    assert.expect(0);
-
     await this.store().findRecord('taco-soup', 'B');
     await this.db().put({
       _id: 'burritoShake_2_X',
@@ -175,8 +163,6 @@ module(
     });
 
     test('a new record is automatically loaded', async function (assert) {
-      assert.expect(4);
-
       const soupB = await this.store().findRecord('taco-salad', 'B');
       assert.strictEqual(
         soupB.flavor,

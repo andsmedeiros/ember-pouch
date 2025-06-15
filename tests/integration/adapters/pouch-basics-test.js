@@ -43,8 +43,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
   function allTests() {
     test('can find all', async function (assert) {
-      assert.expect(3);
-
       await this.db().bulkDocs([
         { _id: 'tacoSoup_2_A', data: { flavor: 'al pastor' } },
         { _id: 'tacoSoup_2_B', data: { flavor: 'black bean' } },
@@ -71,8 +69,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('can find one', async function (assert) {
-      assert.expect(2);
-
       await this.db().bulkDocs([
         { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
         { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
@@ -89,8 +85,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('can query with sort', async function (assert) {
-      assert.expect(3);
-
       await this.db().createIndex({ index: { fields: ['data.name'] } });
       await this.db().bulkDocs([
         {
@@ -134,8 +128,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('can query multi-field queries', async function (assert) {
-      assert.expect(3);
-
       await this.db().createIndex({
         index: { fields: ['data.series', 'data.debut'] },
       });
@@ -181,8 +173,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('queryRecord returns null when no record is found', async function (assert) {
-      assert.expect(1);
-
       await this.db().createIndex({ index: { fields: ['data.flavor'] } });
       await this.db().bulkDocs([
         {
@@ -206,8 +196,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('can query one record', async function (assert) {
-      assert.expect(1);
-
       await this.db().createIndex({ index: { fields: ['data.flavor'] } });
       await this.db().bulkDocs(getDocsForRelations());
 
@@ -223,8 +211,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('can query one associated records', async function (assert) {
-      assert.expect(3);
-
       await this.db().createIndex({ index: { fields: ['data.flavor'] } });
       await this.db().bulkDocs(getDocsForRelations());
 
@@ -252,8 +238,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('can find associated records', async function (assert) {
-      assert.expect(3);
-
       await this.db().bulkDocs(getDocsForRelations());
 
       const found = await this.store().findRecord('taco-soup', 'C');
@@ -273,8 +257,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('create a new record', async function (assert) {
-      assert.expect(2);
-
       const newSoup = this.store().createRecord('taco-soup', {
         id: 'E',
         flavor: 'balsamic',
@@ -297,8 +279,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('creating an associated record stores a reference to it in the parent', async function (assert) {
-      assert.expect(1);
-
       const s = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
       if (savingHasMany()) s.data.ingredients = [];
       await this.db().bulkDocs([s]);
@@ -324,8 +304,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('update an existing record', async function (assert) {
-      assert.expect(2);
-
       await this.db().bulkDocs([
         { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
         { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
@@ -351,8 +329,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('delete an existing record', async function (assert) {
-      assert.expect(1);
-
       await this.db().bulkDocs([
         { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
         { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
@@ -376,7 +352,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
   let asyncTests = function () {
     test('eventually consistency - success', async function (assert) {
-      assert.expect(1);
       assert.timeout(5000);
 
       await this.db().bulkDocs([
@@ -384,7 +359,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       ]);
 
       const foodItem = await this.store().findRecord('food-item', 'X');
-      const [ soup ] = await Promise.all([
+      const [soup] = await Promise.all([
         foodItem.soup,
         promiseToRunLater(0).then(() =>
           this.db().bulkDocs([
@@ -397,7 +372,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('eventually consistency - deleted', async function (assert) {
-      assert.expect(1);
       assert.timeout(5000);
 
       await this.db().bulkDocs([
@@ -441,7 +415,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
     test('delete cascade null', async function (assert) {
       assert.timeout(5000);
-      assert.expect(1);
 
       await this.db().bulkDocs(getDocsForRelations());
       const found = await this.store().findRecord('taco-soup', 'D');
@@ -458,8 +431,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
     test('remote delete removes belongsTo relationship', async function (assert) {
       assert.timeout(5000);
-      assert.expect(2);
-
       await this.db().bulkDocs(getDocsForRelations());
       const foodItemZ = await this.store().findRecord('food-item', 'Z');
       const soup = await foodItemZ.soup;
@@ -486,7 +457,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
     test('remote delete removes hasMany relationship', async function (assert) {
       assert.timeout(5000);
-      assert.expect(3);
 
       await this.db().bulkDocs(getDocsForRelations());
       const tacoSoup = await this.store().findRecord('taco-soup', 'C');
@@ -531,7 +501,6 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       },
       function () {
         test('not found', async function (assert) {
-          assert.expect(2);
           assert.false(
             config.emberPouch.eventuallyConsistent,
             'eventuallyConsistent is false',
