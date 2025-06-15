@@ -25,30 +25,25 @@ function createDb() {
 }
 
 export default class TacoSaladAdapter extends Adapter {
-  constructor(owner, args) {
-    super(owner, args);
-    this.db = createDb();
+  constructor(owner) {
+    super(owner, createDb());
   }
 
-  _init(store, type) {
+  prepare(store, type, indexPromises) {
     type.eachRelationship((name, rel) => {
       rel.options.async = config.emberPouch.async;
       if (rel.kind === 'hasMany') {
         rel.options.save = config.emberPouch.saveHasMany;
       }
     });
-    if (super._init) {
-      return super._init(...arguments);
-    }
+
+    return super.prepare(store, type, indexPromises);
   }
 
-  unloadedDocumentChanged(obj) {
-    let store = this.store;
-    let recordTypeName = this.getRecordTypeName(store.modelFor(obj.type));
-    this.db.rel.find(recordTypeName, obj.id).then(function (doc) {
-      run(function () {
-        store.pushPayload(recordTypeName, doc);
-      });
-    });
+  async unloadedDocumentChanged(obj) {
+    const recordModel = this.store.modelFor(obj.type);
+    const recordTypeName = this.getRecordTypeName(recordModel);
+    const doc = await this.db.rel.find(recordTypeName, obj.id)
+    await this.store.pushPayload(recordTypeName, doc);
   }
 }

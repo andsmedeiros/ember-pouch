@@ -4,10 +4,8 @@ import { isEmpty } from '@ember/utils';
 import { all, defer } from 'rsvp';
 import { getOwner } from '@ember/application';
 import { registerDestructor } from '@ember/destroyable';
-import { on } from '@ember/object/evented';
 import { classify, camelize } from '@ember/string';
 import { pluralize } from 'ember-inflector';
-//import BelongsToRelationship from 'ember-data/-private/system/relationships/state/belongs-to';
 
 import {
   extractDeleteRecord,
@@ -15,105 +13,90 @@ import {
   configFlagDisabled,
 } from '../utils';
 
-//BelongsToRelationship.reopen({
-//  findRecord() {
-//    return this._super().catch(() => {
-//      //not found: deleted
-//      this.clear();
-//    });
-//  }
-//});
-
-export default class PouchAdapter extends RESTAdapter.extend({
-  coalesceFindRequests: false,
+export default class PouchAdapter extends RESTAdapter {
+  coalesceFindRequests = false;
 
   // The change listener ensures that individual records are kept up to date
   // when the data in the database changes. This makes ember-data 2.0's record
   // reloading redundant.
-  shouldReloadRecord: function () {
+  shouldReloadRecord() {
     return false;
-  },
-  shouldBackgroundReloadRecord: function () {
+  }
+
+  shouldBackgroundReloadRecord() {
     return false;
-  },
-  _onInit: on('init', function () {
-    this._startChangesToStoreListener();
-  }),
-  _startChangesToStoreListener: function () {
-    var db = this.db;
-    if (db && !this.changes) {
+  }
+
+  #startChangesToStoreListener() {
+    if (this.db && !this.changes) {
       // only run this once
       const onChangeListener = (change) => this.onChange(change);
       this.onChangeListener = onChangeListener;
-      this.changes = db.changes({
+      this.changes = this.db.changes({
         since: 'now',
         live: true,
         returnDocs: false,
       });
       this.changes.on('change', onChangeListener);
-      registerDestructor(this, () =>
-        this.changes.off('change', onChangeListener),
-      );
     }
-  },
+  }
 
-  _stopChangesListener: function () {
+  #stopChangesListener() {
     if (this.changes) {
-      var onChangeListener = this.onChangeListener;
+      const onChangeListener = this.onChangeListener;
       this.changes.removeListener('change', onChangeListener);
       this.changes.cancel();
       this.changes = undefined;
     }
-  },
-  changeDb: function (db) {
-    this._stopChangesListener();
+  }
 
-    var store = this.store;
-    var schema = this._schema || [];
+  changeDb(db) {
+    this.#stopChangesListener();
 
-    for (var i = 0, len = schema.length; i < len; i++) {
-      store.unloadAll(schema[i].singular);
+    const schema = this._schema ?? []
+    for (const { singular } of schema) {
+      this.store.unloadAll(singular);
     }
 
     this._schema = null;
     this.db = db;
-    this._startChangesToStoreListener();
-  },
-  onChange: function (change) {
-    // If relational_pouch isn't initialized yet, there can't be any records
+    this.#startChangesToStoreListener();
+  }
+
+  onChange(change) {
+    // If relational_pouch isn't prepareialized yet, there can't be any records
     // in the store to update.
     if (!this.db.rel) {
       return;
     }
 
-    var obj = this.db.rel.parseDocID(change.id);
+    const obj = this.db.rel.parseDocID(change.id);
+
     // skip changes for non-relational_pouch docs. E.g., design docs.
     if (!obj.type || !obj.id || obj.type === '') {
       return;
     }
 
-    var store = this.store;
-
     if (this.waitingForConsistency[change.id]) {
-      let promise = this.waitingForConsistency[change.id];
+      const promise = this.waitingForConsistency[change.id];
       delete this.waitingForConsistency[change.id];
       if (change.deleted) {
         promise.reject('deleted');
       } else {
-        promise.resolve(this._findRecord(obj.type, obj.id));
+        promise.resolve(this.#findRecord(obj.type, obj.id));
       }
       return;
     }
 
     try {
-      store.modelFor(obj.type);
+      this.store.modelFor(obj.type);
     } catch (_error) {
       // The record refers to a model which this version of the application
       // does not have.
       return;
     }
 
-    var recordInStore = store.peekRecord(obj.type, obj.id);
+    const recordInStore = this.store.peekRecord(obj.type, obj.id);
     if (!recordInStore) {
       // The record hasn't been loaded into the store; no need to reload its data.
       if (this.createdRecords[obj.id]) {
@@ -123,10 +106,11 @@ export default class PouchAdapter extends RESTAdapter.extend({
       }
       return;
     }
+
     if (
-      !recordInStore.get('isLoaded') ||
-      recordInStore.get('rev') === change.changes[0].rev ||
-      recordInStore.get('hasDirtyAttributes')
+      !recordInStore.isLoaded ||
+      recordInStore.rev === change.changes[0].rev ||
+      recordInStore.hasDirtyAttributes
     ) {
       // The record either hasn't loaded yet or has unpersisted local changes.
       // In either case, we don't want to refresh it in the store
@@ -143,34 +127,37 @@ export default class PouchAdapter extends RESTAdapter.extend({
     } else {
       return recordInStore.reload();
     }
-  },
+  }
 
-  unloadedDocumentChanged: function (/* obj */) {
+  unloadedDocumentChanged(/* obj */) {
     /*
      * For performance purposes, we don't load records into the store that haven't previously been loaded.
      * If you want to change this, subclass this method, and push the data into the store. e.g.
      *
-     *  let store = this.get('store');
-     *  let recordTypeName = this.getRecordTypeName(store.modelFor(obj.type));
-     *  this.get('db').rel.find(recordTypeName, obj.id).then(function(doc){
-     *    store.pushPayload(recordTypeName, doc);
-     *  });
+     *  const recordTypeName = this.getRecordTypeName(this.store.modelFor(obj.type));
+     *  const doc = await this.db.rel.find(recordTypeName, obj.id);
+     *  this.store.pushPayload(recordTypeName, doc);
      */
-  },
+  }
 
-  willDestroy: function () {
-    this._stopChangesListener();
-  },
 
-  init() {
-    this._indexPromises = [];
-    this.waitingForConsistency = {};
-    this.createdRecords = {};
-  },
+  #indexPromises = [];
+  waitingForConsistency = {};
+  createdRecords = {};
 
-  _indexPromises: null,
+  get indexPromises() {
+    return this.#indexPromises;
+  }
 
-  _init: function (store, type, indexPromises) {
+  constructor(owner, db) {
+    super(owner)
+    this.db = db
+
+    this.#startChangesToStoreListener();
+    registerDestructor(this, () => this.#stopChangesListener());
+  }
+
+  prepare(store, type, indexPromises) {
     var self = this,
       recordTypeName = this.getRecordTypeName(type);
     if (!this.db || typeof this.db !== 'object') {
@@ -196,7 +183,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
     for (var i = 0, len = this._schema.length; i < len; i++) {
       var currentSchemaDef = this._schema[i];
       if (currentSchemaDef.singular === singular) {
-        return all(this._indexPromises);
+        return all(this.#indexPromises);
       }
     }
 
@@ -272,23 +259,23 @@ export default class PouchAdapter extends RESTAdapter.extend({
           schemaDef.relations[rel.key] = relDef;
         }
 
-        self._init(store, relModel, indexPromises);
+        self.prepare(store, relModel, indexPromises);
       }
     }
 
     this.db.setSchema(this._schema);
 
     if (rootCall) {
-      this._indexPromises = this._indexPromises.concat(indexPromises);
+      this.#indexPromises = this.#indexPromises.concat(indexPromises);
       return all(indexPromises).then(() => {
-        this._indexPromises = this._indexPromises.filter(
+        this.#indexPromises = this.#indexPromises.filter(
           (x) => !indexPromises.includes(x),
         );
       });
     }
-  },
+  }
 
-  _recordToData: function (store, type, record) {
+  #recordToData(store, type, record) {
     var data = {};
     // Though it would work to use the default recordTypeName for modelName &
     // serializerKey here, these uses are conceptually distinct and may vary
@@ -307,22 +294,22 @@ export default class PouchAdapter extends RESTAdapter.extend({
     }
 
     return data;
-  },
+  }
 
   /**
    * Return key that conform to data adapter
    * ex: 'name' become 'data.name'
    */
-  _dataKey: function (key) {
+  #dataKey(key) {
     var dataKey = 'data.' + key;
     return '' + dataKey + '';
-  },
+  }
 
   /**
    * Returns the modified selector key to comform data key
    * Ex: selector: {name: 'Mario'} wil become selector: {'data.name': 'Mario'}
    */
-  _buildSelector: function (selector) {
+  #buildSelector(selector) {
     var dataSelector = {};
     var selectorKeys = [];
 
@@ -334,36 +321,36 @@ export default class PouchAdapter extends RESTAdapter.extend({
 
     selectorKeys.forEach(
       function (key) {
-        var dataKey = this._dataKey(key);
+        var dataKey = this.#dataKey(key);
         dataSelector[dataKey] = selector[key];
       }.bind(this),
     );
 
     return dataSelector;
-  },
+  }
 
   /**
    * Returns the modified sort key
    * Ex: sort: ['series'] will become ['data.series']
    * Ex: sort: [{series: 'desc'}] will became [{'data.series': 'desc'}]
    */
-  _buildSort: function (sort) {
+  #buildSort(sort) {
     return sort.map(
       function (value) {
         var sortKey = {};
         if (typeof value === 'object' && value !== null) {
           for (var key in value) {
             if (Object.prototype.hasOwnProperty.call(value, key)) {
-              sortKey[this._dataKey(key)] = value[key];
+              sortKey[this.#dataKey(key)] = value[key];
             }
           }
         } else {
-          return this._dataKey(value);
+          return this.#dataKey(value);
         }
         return sortKey;
       }.bind(this),
     );
-  },
+  }
 
   /**
    * Returns the string to use for the model name part of the PouchDB document
@@ -379,23 +366,23 @@ export default class PouchAdapter extends RESTAdapter.extend({
    */
   getRecordTypeName(type) {
     return camelize(type.modelName);
-  },
+  }
 
-  findAll: async function (store, type /*, sinceToken */) {
+  async findAll(store, type /*, sinceToken */) {
     // TODO: use sinceToken
-    await this._init(store, type);
+    await this.prepare(store, type);
     return this.db.rel.find(this.getRecordTypeName(type));
-  },
+  }
 
-  findMany: async function (store, type, ids) {
-    await this._init(store, type);
+  async findMany(store, type, ids) {
+    await this.prepare(store, type);
     return this.db.rel.find(this.getRecordTypeName(type), ids);
-  },
+  }
 
-  findHasMany: async function (store, record, link, rel) {
+  async findHasMany(store, record, link, rel) {
     const model = store.modelFor(record.modelName);
 
-    await this._init(store, model);
+    await this.prepare(store, model);
     let inverse = model.inverseFor(rel.key, store);
     if (inverse && inverse.kind === 'belongsTo') {
       return this.db.rel.findHasMany(
@@ -408,20 +395,20 @@ export default class PouchAdapter extends RESTAdapter.extend({
       result[pluralize(rel.type)] = [];
       return result; //data;
     }
-  },
+  }
 
-  query: async function (store, type, query) {
-    await this._init(store, type);
+  async query(store, type, query) {
+    await this.prepare(store, type);
 
     var recordTypeName = this.getRecordTypeName(type);
     var db = this.db;
 
     var queryParams = {
-      selector: this._buildSelector(query.filter),
+      selector: this.#buildSelector(query.filter),
     };
 
     if (!isEmpty(query.sort)) {
-      queryParams.sort = this._buildSort(query.sort);
+      queryParams.sort = this.#buildSort(query.sort);
     }
 
     if (!isEmpty(query.limit)) {
@@ -434,9 +421,9 @@ export default class PouchAdapter extends RESTAdapter.extend({
 
     let pouchRes = await db.find(queryParams);
     return db.rel.parseRelDocs(recordTypeName, pouchRes.docs);
-  },
+  }
 
-  queryRecord: async function (store, type, query) {
+  async queryRecord(store, type, query) {
     let results = await this.query(store, type, query);
     let recordType = this.getRecordTypeName(type);
     let recordTypePlural = pluralize(recordType);
@@ -447,7 +434,7 @@ export default class PouchAdapter extends RESTAdapter.extend({
     }
     delete results[recordTypePlural];
     return results;
-  },
+  }
 
   /**
    * `find` has been deprecated in ED 1.13 and is replaced by 'new store
@@ -456,17 +443,17 @@ export default class PouchAdapter extends RESTAdapter.extend({
    * `findRecord`. This can be removed when the library drops support
    * for deprecated methods.
    */
-  find: function (store, type, id) {
+  find(store, type, id) {
     return this.findRecord(store, type, id);
-  },
+  }
 
-  findRecord: async function (store, type, id) {
-    await this._init(store, type);
+  async findRecord(store, type, id) {
+    await this.prepare(store, type);
     var recordTypeName = this.getRecordTypeName(type);
-    return this._findRecord(recordTypeName, id);
-  },
+    return this.#findRecord(recordTypeName, id);
+  }
 
-  async _findRecord(recordTypeName, id) {
+  async #findRecord(recordTypeName, id) {
     let payload = await this.db.rel.find(recordTypeName, id);
     // Ember Data chokes on empty payload, this function throws
     // an error when the requested data is not found
@@ -488,12 +475,10 @@ export default class PouchAdapter extends RESTAdapter.extend({
           id +
           "' not found.",
       );
-    else return this._eventuallyConsistent(recordTypeName, id);
-  },
+    else return this.#eventuallyConsistent(recordTypeName, id);
+  }
 
-  //TODO: cleanup promises on destroy or db change?
-  waitingForConsistency: null,
-  _eventuallyConsistent: function (type, id) {
+  #eventuallyConsistent(type, id) {
     let pouchID = this.db.rel.makeDocID({ type, id });
     let defered = defer();
     this.waitingForConsistency[pouchID] = defered;
@@ -512,19 +497,18 @@ export default class PouchAdapter extends RESTAdapter.extend({
         //TODO: should we reject or resolve the promise? or does JS GC still clean it?
         if (this.waitingForConsistency[pouchID]) {
           delete this.waitingForConsistency[pouchID];
-          return this._findRecord(type, id);
+          return this.#findRecord(type, id);
         } else {
           //findRecord is already handled by onChange
           return defered.promise;
         }
       }
     });
-  },
+  }
 
-  createdRecords: null,
-  createRecord: async function (store, type, record) {
-    await this._init(store, type);
-    var data = this._recordToData(store, type, record);
+  async createRecord(store, type, record) {
+    await this.prepare(store, type);
+    var data = this.#recordToData(store, type, record);
     let rel = this.db.rel;
 
     let id = data.id;
@@ -544,26 +528,26 @@ export default class PouchAdapter extends RESTAdapter.extend({
       delete this.createdRecords[id];
       throw e;
     }
-  },
+  }
 
-  updateRecord: async function (store, type, record) {
-    await this._init(store, type);
-    var data = this._recordToData(store, type, record);
+  async updateRecord(store, type, record) {
+    await this.prepare(store, type);
+    var data = this.#recordToData(store, type, record);
     let typeName = this.getRecordTypeName(type);
     let saved = await this.db.rel.save(typeName, data);
     Object.assign(data, saved); //TODO: could only set .rev
     let result = {};
     result[pluralize(typeName)] = [data];
     return result;
-  },
+  }
 
-  deleteRecord: async function (store, type, record) {
+  async deleteRecord(store, type, record) {
     if (record.adapterOptions && record.adapterOptions.serverPush) return;
 
-    await this._init(store, type);
-    var data = this._recordToData(store, type, record);
+    await this.prepare(store, type);
+    var data = this.#recordToData(store, type, record);
     return this.db.rel
       .del(this.getRecordTypeName(type), data)
       .then(extractDeleteRecord);
-  },
-}) {}
+  }
+}

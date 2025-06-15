@@ -25,21 +25,19 @@ function createDb() {
 }
 
 export default class ApplicationAdapter extends Adapter {
-  constructor(owner, args) {
-    super(owner, args);
-    this.db = createDb();
+  constructor(owner) {
+    super(owner, createDb());
   }
 
-  _init(store, type) {
+  prepare(store, type, indexPromises) {
     type.eachRelationship((name, rel) => {
       rel.options.async = config.emberPouch.async;
       if (rel.kind === 'hasMany') {
         rel.options.save = config.emberPouch.saveHasMany;
       }
     });
-    if (super._init) {
-      return super._init(...arguments);
-    }
+    
+    return super.prepare(store, type, indexPromises);
   }
 
   onChangeListenerTest = null;
