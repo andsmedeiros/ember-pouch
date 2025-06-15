@@ -1,5 +1,5 @@
 import Model, { attr } from '@ember-data/model';
 
-export default Model.extend({
-  rev: attr('string'),
-});
+export default class PouchModel extends Model {
+  @attr('string') rev;
+}

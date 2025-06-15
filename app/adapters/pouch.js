@@ -1,3 +1,3 @@
-import { Adapter } from 'ember-pouch'
+import { Adapter } from 'ember-pouch';
 
-export default Adapter
+export default Adapter;
