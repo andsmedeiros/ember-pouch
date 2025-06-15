@@ -11,7 +11,11 @@ const IS_EMBROIDER_ENABLED = Boolean(process.env.EMBROIDER_TEST_SETUP_OPTIONS);
 
 module.exports = function (defaults) {
   let app = new EmberAddon(defaults, {
-    // Add options here
+    emberData: {
+      deprecations: {
+        DEPRECATE_STORE_EXTENDS_EMBER_OBJECT: false
+      }
+    }
   });
 
   /*
@@ -29,11 +33,14 @@ module.exports = function (defaults) {
     ],
     /* eslint-disable prettier/prettier */
     packagerOptions: {
-      webpackConfig: IS_EMBROIDER_ENABLED === false ? {} : {
-        node: {
-          global: true,
-        },
-      },
+      webpackConfig:
+        IS_EMBROIDER_ENABLED === false
+          ? {}
+          : {
+              node: {
+                global: true,
+              },
+            },
     },
     /* eslint-disable prettier/prettier */
   });
