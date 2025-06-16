@@ -13,9 +13,9 @@ module.exports = function (defaults) {
   let app = new EmberAddon(defaults, {
     emberData: {
       deprecations: {
-        DEPRECATE_STORE_EXTENDS_EMBER_OBJECT: false
-      }
-    }
+        DEPRECATE_STORE_EXTENDS_EMBER_OBJECT: false,
+      },
+    },
   });
 
   /*
@@ -31,7 +31,7 @@ module.exports = function (defaults) {
         package: 'qunit',
       },
     ],
-    /* eslint-disable prettier/prettier */
+
     packagerOptions: {
       webpackConfig:
         IS_EMBROIDER_ENABLED === false
@@ -42,6 +42,5 @@ module.exports = function (defaults) {
               },
             },
     },
-    /* eslint-disable prettier/prettier */
   });
 };

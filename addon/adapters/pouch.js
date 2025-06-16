@@ -53,7 +53,7 @@ export default class PouchAdapter extends RESTAdapter {
   changeDb(db) {
     this.#stopChangesListener();
 
-    const schema = this._schema ?? []
+    const schema = this._schema ?? [];
     for (const { singular } of schema) {
       this.store.unloadAll(singular);
     }
@@ -140,7 +140,6 @@ export default class PouchAdapter extends RESTAdapter {
      */
   }
 
-
   #indexPromises = [];
   waitingForConsistency = {};
   createdRecords = {};
@@ -150,8 +149,8 @@ export default class PouchAdapter extends RESTAdapter {
   }
 
   constructor(owner, db) {
-    super(owner)
-    this.db = db
+    super(owner);
+    this.db = db;
 
     this.#startChangesToStoreListener();
     registerDestructor(this, () => this.#stopChangesListener());

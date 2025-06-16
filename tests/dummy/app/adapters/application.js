@@ -36,7 +36,7 @@ export default class ApplicationAdapter extends Adapter {
         rel.options.save = config.emberPouch.saveHasMany;
       }
     });
-    
+
     return super.prepare(store, type, indexPromises);
   }
 

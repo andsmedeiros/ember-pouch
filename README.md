@@ -1,7 +1,7 @@
 # Ember Pouch [![Build Status](https://travis-ci.org/pouchdb-community/ember-pouch.svg)](https://travis-ci.org/pouchdb-community/ember-pouch) [![GitHub version](https://badge.fury.io/gh/pouchdb-community%2Fember-pouch.svg)](https://badge.fury.io/gh/pouchdb-community%2Fember-pouch) [![Ember Observer Score](https://emberobserver.com/badges/ember-pouch.svg)](https://emberobserver.com/addons/ember-pouch)
 
--  [**Changelog**](#changelog)
--  [**Upgrading**](#upgrading)
+- [**Changelog**](#changelog)
+- [**Upgrading**](#upgrading)
 
 Ember Pouch is a PouchDB/CouchDB adapter for Ember Data 3.16+. For older Ember Data versions down to 2.0+ use Ember Pouch version 7.0 For Ember Data versions lower than 2.0+ use Ember Pouch version 3.2.2.
 
@@ -387,7 +387,7 @@ myAlbum.photos.addObject(
     name: 'kitten.jpg',
     content_type: 'image/jpg',
     data: btoa('hello world'), // base64-encoded `String`, or a DOM `Blob`, or a `File`
-  })
+  }),
 );
 ```
 
@@ -591,6 +591,7 @@ This project was originally based on the [ember-data-hal-adapter](https://github
 And of course thanks to all our wonderful contributors, [here](https://github.com/pouchdb-community/ember-pouch/graphs/contributors) and [in Relational Pouch](https://github.com/pouchdb-community/relational-pouch/graphs/contributors)!
 
 ## Changelog
+
 - **8.0.0-beta.2**
   - Set PouchDb indexeddb adapter as default instead of idb adapter to use native views
   - Generate adapters/application.js at installation

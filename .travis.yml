@@ -12,7 +12,7 @@ addons:
 
 cache:
   yarn: true
-  
+
 env:
   global:
     # See https://github.com/ember-cli/ember-cli/blob/master/docs/build-concurrency.md for details.
