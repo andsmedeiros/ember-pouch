@@ -1,14 +1,15 @@
 import { isNone } from '@ember/utils';
 import AttachmentsTransform from './attachments';
 
-export default AttachmentsTransform.extend({
-  deserialize: function (serialized) {
-    return this._super(serialized).pop();
-  },
-  serialize: function (deserialized) {
+export default class AttachmentTransform extends AttachmentsTransform {
+  deserialize(serialized) {
+    return super.deserialize(serialized).pop();
+  }
+
+  serialize(deserialized) {
     if (isNone(deserialized)) {
       return null;
     }
-    return this._super([deserialized]);
-  },
-});
+    return super.serialize([deserialized]);
+  }
+}

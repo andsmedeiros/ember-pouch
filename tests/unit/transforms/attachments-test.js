@@ -47,7 +47,7 @@ module('Unit | Transform | attachments', function (hooks) {
 
     let serializedData = transform.serialize(testDeserializedData);
 
-    let hello = testDeserializedData[0].get('name');
+    let hello = testDeserializedData[0].name;
     assert.strictEqual(hello, 'hello.txt');
     assert.strictEqual(
       serializedData[hello].content_type,
@@ -58,7 +58,7 @@ module('Unit | Transform | attachments', function (hooks) {
       testSerializedData[hello].data,
     );
 
-    let stub = testDeserializedData[1].get('name');
+    let stub = testDeserializedData[1].name;
     assert.strictEqual(stub, 'stub.txt');
     assert.strictEqual(
       serializedData[stub].content_type,
@@ -75,38 +75,38 @@ module('Unit | Transform | attachments', function (hooks) {
     let deserializedData = transform.deserialize(testSerializedData);
 
     assert.strictEqual(
-      deserializedData[0].get('name'),
-      testDeserializedData[0].get('name'),
+      deserializedData[0].name,
+      testDeserializedData[0].name,
     );
     assert.strictEqual(
-      deserializedData[0].get('content_type'),
-      testDeserializedData[0].get('content_type'),
+      deserializedData[0].content_type,
+      testDeserializedData[0].content_type,
     );
     assert.strictEqual(
-      deserializedData[0].get('data'),
-      testDeserializedData[0].get('data'),
+      deserializedData[0].data,
+      testDeserializedData[0].data,
     );
     assert.strictEqual(
-      deserializedData[0].get('digest'),
-      testDeserializedData[0].get('digest'),
+      deserializedData[0].digest,
+      testDeserializedData[0].digest,
     );
 
     assert.strictEqual(
-      deserializedData[1].get('name'),
-      testDeserializedData[1].get('name'),
+      deserializedData[1].name,
+      testDeserializedData[1].name,
     );
     assert.strictEqual(
-      deserializedData[1].get('content_type'),
-      testDeserializedData[1].get('content_type'),
+      deserializedData[1].content_type,
+      testDeserializedData[1].content_type,
     );
-    assert.true(deserializedData[1].get('stub'));
+    assert.true(deserializedData[1].stub);
     assert.strictEqual(
-      deserializedData[1].get('digest'),
-      testDeserializedData[1].get('digest'),
+      deserializedData[1].digest,
+      testDeserializedData[1].digest,
     );
     assert.strictEqual(
-      deserializedData[1].get('length'),
-      testDeserializedData[1].get('length'),
+      deserializedData[1].length,
+      testDeserializedData[1].length,
     );
   });
 });

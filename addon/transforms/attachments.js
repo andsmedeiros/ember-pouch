@@ -1,48 +1,39 @@
 import Transform from '@ember-data/serializer/transform';
-import { isArray } from '@ember/array';
-import EmberObject from '@ember/object';
 import { isNone } from '@ember/utils';
 
-const { keys } = Object;
-
-export default Transform.extend({
-  deserialize: function (serialized) {
+export default class AttachmentsTransform extends Transform {
+  deserialize(serialized) {
     if (isNone(serialized)) {
       return [];
     }
 
-    return keys(serialized).map(function (attachmentName) {
-      let attachment = serialized[attachmentName];
-      return EmberObject.create({
-        name: attachmentName,
-        content_type: attachment.content_type,
-        data: attachment.data,
-        stub: attachment.stub,
-        length: attachment.length,
-        digest: attachment.digest,
-      });
+    return Object.keys(serialized).map((name) => {
+      let { content_type, data, stub, length, digest } = serialized[name];
+      return { name, content_type, data, stub, length, digest };
     });
-  },
+  }
 
-  serialize: function (deserialized) {
-    if (!isArray(deserialized)) {
+  serialize(deserialized) {
+    if (!Array.isArray(deserialized)) {
       return null;
     }
 
-    return deserialized.reduce(function (acc, attachment) {
-      const serialized = {
-        content_type: attachment.content_type,
-      };
-      if (attachment.stub) {
-        serialized.stub = true;
-        serialized.length = attachment.length;
-        serialized.digest = attachment.digest;
+    const serialized = {};
+    for (const deserializedAttachment of deserialized) {
+      const { name, content_type, data, stub, length, digest } =
+        deserializedAttachment;
+
+      const attachment = { content_type, length };
+      if (stub) {
+        attachment.stub = true;
+        attachment.digest = digest;
       } else {
-        serialized.data = attachment.data;
-        serialized.length = attachment.length;
+        attachment.data = data;
       }
-      acc[attachment.name] = serialized;
-      return acc;
-    }, {});
-  },
-});
+
+      serialized[name] = attachment;
+    }
+
+    return serialized;
+  }
+}
