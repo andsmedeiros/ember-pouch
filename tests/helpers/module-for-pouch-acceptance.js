@@ -23,9 +23,11 @@ export default function (hooks) {
     const db = this.db();
 
     const { indexes } = await db.getIndexes();
-    await Promise.all(
-      indexes.filter(({ ddoc }) => ddoc).map((index) => db.deleteIndex(index)),
-    );
+    for (const index of indexes) {
+      if (index.ddoc) {
+        await db.deleteIndex(index);
+      }
+    }
 
     await db.destroy();
   });
