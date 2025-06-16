@@ -116,18 +116,35 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   });
 
   test('a change to a record with a non-relational-pouch ID does not cause an error', async function (assert) {
-    await this.store().findRecord('taco-soup', 'B');
-    await this.db().put({
-      _id: '_design/ingredient-use',
-    });
+    let success = false;
+
+    try {
+      await this.store().findRecord('taco-soup', 'B');
+      await this.db().put({
+        _id: '_design/ingredient-use',
+      });
+
+      success = true;
+    } finally {
+      assert.ok(success, 'no error should have occurred');
+    }
+
   });
 
   test('a change to a record of an unknown type does not cause an error', async function (assert) {
-    await this.store().findRecord('taco-soup', 'B');
-    await this.db().put({
-      _id: 'burritoShake_2_X',
-      data: { consistency: 'chunky' },
-    });
+    let success = false;
+
+    try {
+      await this.store().findRecord('taco-soup', 'B');
+      await this.db().put({
+        _id: 'burritoShake_2_X',
+        data: { consistency: 'chunky' },
+      });
+
+      success = true;
+    } finally {
+      assert.ok(success, 'no error should have occurred');
+    }
   });
 });
 
