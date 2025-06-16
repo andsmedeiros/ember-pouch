@@ -1,34 +1,23 @@
 import RESTSerializer from '@ember-data/serializer/rest';
-import { getOwner } from '@ember/owner';
-
 import { shouldSaveRelationship } from '../utils';
 
-const { keys } = Object;
-
 export default class PouchSerializer extends RESTSerializer {
-  shouldSerializeHasMany(snapshot, key, relationship) {
-    let result = shouldSaveRelationship(this, relationship);
-    return result;
-  }
-
   #isAttachment(attribute) {
     return ['attachment', 'attachments'].includes(attribute.type);
+  }
+
+  shouldSerializeHasMany(snapshot, key, relationship) {
+    return shouldSaveRelationship(this, relationship);
   }
 
   serializeAttribute(snapshot, json, key, attribute) {
     super.serializeAttribute(snapshot, json, key, attribute);
 
     if (this.#isAttachment(attribute)) {
-      // if provided, use the mapping provided by `attrs` in the serializer
-      const modelClass = getOwner(this)
-        .lookup('service:store')
-        .modelFor(snapshot.modelName);
-
-      let payloadKey = this.attrs?.[key]?.key ?? this.attrs?.[key] ?? key;
-
-      if (payloadKey === key) {
-        payloadKey = this.keyForAttribute(key, 'serialize');
-      }
+      const payloadKey =
+        this.attrs?.[key]?.key ?? // attrs = { key: { key: "..." } }
+        this.attrs?.[key] ?? // attrs = { key: "..." }
+        this.keyForAttribute(key, 'serialize');
 
       // Merge any attachments in this attribute into the `attachments` property.
       // relational-pouch will put these in the special CouchDB `_attachments` property
@@ -40,29 +29,30 @@ export default class PouchSerializer extends RESTSerializer {
         ...json[payloadKey],
       };
 
-      json[payloadKey] = keys(json[payloadKey]).reduce((attr, fileName) => {
-        attr[fileName] = { ...json[payloadKey][fileName] };
-        delete attr[fileName].data;
-        delete attr[fileName].content_type;
-        return attr;
-      }, {});
+      const serialized = {};
+      for (const fileName of Object.keys(json[payloadKey])) {
+        const serializedPayload = { ...json[payloadKey][fileName] };
+        delete serializedPayload.data;
+        delete serializedPayload.content_type;
+        serialized[fileName] = serializedPayload;
+      }
+
+      json[payloadKey] = serialized;
     }
   }
 
   extractAttributes(modelClass, resourceHash) {
     const attributes = super.extractAttributes(modelClass, resourceHash);
-    const modelAttrs = modelClass.attributes;
 
-    modelClass.eachTransformedAttribute((key) => {
-      const attribute = modelAttrs.get(key);
+    for (const key of modelClass.transformedAttributes.keys()) {
+      const attribute = modelClass.attributes.get(key);
       if (this.#isAttachment(attribute)) {
         // put the corresponding _attachments entries from the response into the attribute
-        const fileNames = keys(attributes[key]);
-        fileNames.forEach((fileName) => {
+        for (const fileName of Object.keys(attributes[key])) {
           attributes[key][fileName] = resourceHash.attachments[fileName];
-        });
+        }
       }
-    });
+    }
 
     return attributes;
   }
@@ -70,15 +60,15 @@ export default class PouchSerializer extends RESTSerializer {
   extractRelationships(modelClass, ...args) {
     const relationships = super.extractRelationships(modelClass, ...args);
 
-    modelClass.eachRelationship((key, relationshipMeta) => {
+    for (const [name, relationship] of modelClass.relationshipsByName) {
       if (
-        relationshipMeta.kind === 'hasMany' &&
-        !shouldSaveRelationship(this, relationshipMeta) &&
-        !!relationshipMeta.options.async
+        relationship.kind === 'hasMany' &&
+        !shouldSaveRelationship(this, relationship) &&
+        !!relationship.options.async
       ) {
-        relationships[key] = { links: { related: key } };
+        relationships[name] = { links: { related: name } };
       }
-    });
+    }
 
     return relationships;
   }
