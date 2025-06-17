@@ -12,7 +12,6 @@ module.exports = function (environment) {
       FEATURES: {
         // Here you can enable experimental features on an ember canary build
         // e.g. 'with-controller': true
-        'ds-references': true,
       },
       EXTEND_PROTOTYPES: false,
     },
