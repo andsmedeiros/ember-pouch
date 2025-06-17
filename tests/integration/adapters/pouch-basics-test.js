@@ -1,15 +1,10 @@
-import { later, run } from '@ember/runloop';
-import { Promise, all } from 'rsvp';
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
-
 import moduleForIntegration from '../../helpers/module-for-pouch-acceptance';
 import config from 'dummy/config/environment';
 
-function promiseToRunLater(timeout) {
-  return new Promise((resolve) => {
-    later(() => resolve(), timeout);
-  });
+function delay(timeout) {
+  return new Promise((resolve) => setTimeout(resolve, timeout));
 }
 
 function savingHasMany() {
@@ -17,27 +12,29 @@ function savingHasMany() {
 }
 
 function getDocsForRelations() {
-  let result = [];
+  const tacoSoupC = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
+  if (savingHasMany()) tacoSoupC.data.ingredients = ['X', 'Y'];
 
-  let c = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
-  if (savingHasMany()) c.data.ingredients = ['X', 'Y'];
-  result.push(c);
+  const tacoSoupD = { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } };
+  if (savingHasMany()) tacoSoupD.data.ingredients = ['Z'];
 
-  let d = { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } };
-  if (savingHasMany()) d.data.ingredients = ['Z'];
-  result.push(d);
-
-  result.push({ _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } });
-  result.push({ _id: 'foodItem_2_Y', data: { name: 'pork loin', soup: 'C' } });
-  result.push({
+  const foodItemX = {
+    _id: 'foodItem_2_X',
+    data: { name: 'pineapple', soup: 'C' },
+  };
+  const foodItemY = {
+    _id: 'foodItem_2_Y',
+    data: { name: 'pork loin', soup: 'C' },
+  };
+  const foodItemZ = {
     _id: 'foodItem_2_Z',
     data: { name: 'black beans', soup: 'D' },
-  });
+  };
 
-  return result;
+  return [tacoSoupC, tacoSoupD, foodItemX, foodItemY, foodItemZ];
 }
 
-module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
+module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
   setupTest(hooks);
   moduleForIntegration(hooks);
 
@@ -279,9 +276,12 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('creating an associated record stores a reference to it in the parent', async function (assert) {
-      const s = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
-      if (savingHasMany()) s.data.ingredients = [];
-      await this.db().bulkDocs([s]);
+      const soupDocument = {
+        _id: 'tacoSoup_2_C',
+        data: { flavor: 'al pastor' },
+      };
+      if (savingHasMany()) soupDocument.data.ingredients = [];
+      await this.db().bulkDocs([soupDocument]);
 
       const tacoSoup = await this.store().findRecord('taco-soup', 'C');
       const newIngredient = this.store().createRecord('food-item', {
@@ -292,7 +292,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       await newIngredient.save();
       if (savingHasMany()) await tacoSoup.save();
 
-      run(() => this.store().unloadAll());
+      this.store().unloadAll();
       const reloadedTacoSoup = await this.store().findRecord('taco-soup', 'C');
       const foundIngredients = await reloadedTacoSoup.ingredients;
 
@@ -337,42 +337,50 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       const found = await this.store().findRecord('taco-soup', 'C');
       await found.destroyRecord();
 
-      try {
-        await this.db().get('tacoSoup_2_C');
-        assert.notOk(true, 'document should no longer exist');
-      } catch (result) {
-        assert.strictEqual(
-          result.status,
-          404,
-          'document should no longer exist',
-        );
-      }
+      assert.rejects(
+        this.db().get('tacoSoup_2_C'),
+        ({ status }) => status === 404,
+        'document should no longer exist',
+      );
     });
   }
 
-  let asyncTests = function () {
+  function asyncTests() {
     test('eventually consistency - success', async function (assert) {
-      assert.timeout(5000);
+      assert.timeout(1000);
 
       await this.db().bulkDocs([
         { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
       ]);
 
       const foodItem = await this.store().findRecord('food-item', 'X');
-      const [soup] = await Promise.all([
-        foodItem.soup,
-        promiseToRunLater(0).then(() =>
+
+      let loaded = false;
+
+      // This will insert the related record into the store after some time.
+      // The relationship promise below should only be resolved when the
+      // document is inserted, which occurs after the promise is awaited
+      delay(10)
+        .then(() =>
           this.db().bulkDocs([
             { _id: 'tacoSoup_2_C', data: { flavor: 'test' } },
           ]),
-        ),
-      ]);
+        )
+        .then(() => (loaded = true));
 
+      assert.false(loaded, 'The record should not have been loaded yet');
+
+      // This awaits the relationship promise that will only be resolved when
+      // the related record is loaded into the store
+      const soup = await foodItem.soup;
+
+      assert.true(loaded, 'The record should have been loaded by now');
       assert.strictEqual(soup.id, 'C');
+      assert.strictEqual(soup.flavor, 'test');
     });
 
     test('eventually consistency - deleted', async function (assert) {
-      assert.timeout(5000);
+      assert.timeout(1000);
 
       await this.db().bulkDocs([
         { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
@@ -380,14 +388,18 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
       const foodItem = await this.store().findRecord('food-item', 'X');
 
-      await Promise.all([
-        foodItem.soup
-          .then((soup) => assert.strictEqual(soup, null, 'isDeleted'))
-          .catch(() => assert.ok(true, 'isDeleted')),
-        promiseToRunLater(100).then(() =>
+      let loaded = false;
+
+      delay(10)
+        .then(() =>
           this.db().bulkDocs([{ _id: 'tacoSoup_2_C', _deleted: true }]),
-        ),
-      ]);
+        )
+        .then(() => (loaded = true));
+      assert.false(loaded, 'The record should not have been loaded yet');
+
+      // If the record is deleted, the promise is expected to reject
+      await assert.rejects(foodItem.soup, /deleted/);
+      assert.true(loaded, 'The record should have been loaded by now');
     });
 
     test('prepare should work', async function (assert) {
@@ -401,7 +413,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
 
       assert.notEqual(db.rel, undefined, 'prepare should set schema');
       assert.strictEqual(
-        this.adapter()._schema.length,
+        adapter._schema.length,
         2,
         'should have set all relationships on the schema',
       );
@@ -410,12 +422,16 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
         adapter.prepare(this.store(), this.store().modelFor('taco-soup')),
       );
 
-      await Promise.all(promises);
+      let success = false;
+      try {
+        await Promise.all(promises);
+        success = true;
+      } finally {
+        assert.true(success, 'Promise returned by `prepare` rejected');
+      }
     });
 
     test('delete cascade null', async function (assert) {
-      assert.timeout(5000);
-
       await this.db().bulkDocs(getDocsForRelations());
       const found = await this.store().findRecord('taco-soup', 'D');
       await found.destroyRecord();
@@ -423,14 +439,14 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
       this.store().unloadAll();
       const foodItem = await this.store().findRecord('food-item', 'Z');
 
-      assert.ok(
-        !foodItem.belongsTo || foodItem.belongsTo('soup').value() === null,
+      assert.strictEqual(
+        foodItem.belongsTo('soup').value(),
+        null,
         'should set value of belongsTo to null',
       );
     });
 
     test('remote delete removes belongsTo relationship', async function (assert) {
-      assert.timeout(5000);
       await this.db().bulkDocs(getDocsForRelations());
       const foodItemZ = await this.store().findRecord('food-item', 'Z');
       const soup = await foodItemZ.soup;
@@ -456,11 +472,9 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     });
 
     test('remote delete removes hasMany relationship', async function (assert) {
-      assert.timeout(5000);
-
       await this.db().bulkDocs(getDocsForRelations());
       const tacoSoup = await this.store().findRecord('taco-soup', 'C');
-      let liveIngredients = await tacoSoup.ingredients;
+      const liveIngredients = await tacoSoup.ingredients;
 
       assert.strictEqual(
         liveIngredients.length,
@@ -492,40 +506,33 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     module(
       'not eventually consistent',
       {
-        beforeEach: function () {
+        beforeEach() {
           config.emberPouch.eventuallyConsistent = false;
         },
-        afterEach: function () {
+        afterEach() {
           config.emberPouch.eventuallyConsistent = true;
         },
       },
       function () {
         test('not found', async function (assert) {
-          assert.false(
-            config.emberPouch.eventuallyConsistent,
-            'eventuallyConsistent is false',
+          await assert.rejects(
+            this.store().findRecord('food-item', 'non-existent'),
+            /not found/,
           );
-
-          try {
-            await this.store().findRecord('food-item', 'non-existent');
-            assert.ok(false, 'should not succeed');
-          } catch {
-            assert.ok(true, 'item is not found');
-          }
         });
       },
     );
-  };
+  }
 
   let syncAsync = function () {
     module(
       'async',
       {
-        beforeEach: function () {
+        beforeEach() {
           config.emberPouch.async = true;
         },
       },
-      () => {
+      function () {
         allTests();
         asyncTests();
       },
@@ -533,7 +540,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
     module(
       'sync',
       {
-        beforeEach: function () {
+        beforeEach() {
           config.emberPouch.async = false;
         },
       },
@@ -544,7 +551,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
   module(
     'dont save hasMany',
     {
-      beforeEach: function () {
+      beforeEach() {
         config.emberPouch.saveHasMany = false;
       },
     },
@@ -554,7 +561,7 @@ module('Integration | Adapter | Basic CRUD Ops', {}, function (hooks) {
   module(
     'save hasMany',
     {
-      beforeEach: function () {
+      beforeEach() {
         config.emberPouch.saveHasMany = true;
       },
     },
