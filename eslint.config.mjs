@@ -25,10 +25,18 @@ export default defineConfig([
       sourceType: 'module',
 
       parserOptions: {
-        ecmaFeatures: {
-          legacyDecorators: true,
-        },
         requireConfigFile: false,
+        babelOptions: {
+          plugins: [
+            [
+              '@babel/plugin-proposal-decorators',
+              {
+                version: '2018-09',
+                decoratorsBeforeExport: true,
+              },
+            ],
+          ],
+        },
       },
 
       globals: {
