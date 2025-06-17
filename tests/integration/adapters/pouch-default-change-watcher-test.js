@@ -1,4 +1,3 @@
-import { later } from '@ember/runloop';
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 import moduleForIntegration from '../../helpers/module-for-pouch-acceptance';
@@ -8,9 +7,7 @@ import moduleForIntegration from '../../helpers/module-for-pouch-acceptance';
  */
 
 function delay(timeout) {
-  return new Promise((resolve) => {
-    later(resolve, timeout);
-  });
+  return new Promise((resolve) => setTimeout(resolve, timeout));
 }
 
 module('Integration | Adapter | Default Change Watcher', function (hooks) {
@@ -45,7 +42,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
     soupBRecord.data.flavor = 'carnitas';
     await this.db().put(soupBRecord);
 
-    await delay(100);
+    await delay(10);
 
     const alreadyLoadedSoupB = this.store().peekRecord('taco-soup', 'B');
     assert.strictEqual(
@@ -66,7 +63,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
     soupARecord.data.flavor = 'barbacoa';
     await this.db().put(soupARecord);
 
-    await delay(15);
+    await delay(10);
 
     assert.strictEqual(
       this.store().peekRecord('taco-soup', 'A'),
@@ -87,7 +84,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
       data: { flavor: 'sofritas' },
     });
 
-    await delay(15);
+    await delay(10);
 
     assert.strictEqual(
       this.store().peekRecord('taco-soup', 'C'),
@@ -107,9 +104,9 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
     const soupBRecord = await this.db().get('tacoSoup_2_B');
     await this.db().remove(soupBRecord);
 
-    await delay(100);
+    await delay(10);
 
-    assert.ok(
+    assert.true(
       soupB.isDeleted,
       'the corresponding instance should now be deleted',
     );
@@ -126,9 +123,8 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
 
       success = true;
     } finally {
-      assert.ok(success, 'no error should have occurred');
+      assert.true(success, 'no error should have occurred');
     }
-
   });
 
   test('a change to a record of an unknown type does not cause an error', async function (assert) {
@@ -143,7 +139,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
 
       success = true;
     } finally {
-      assert.ok(success, 'no error should have occurred');
+      assert.true(success, 'no error should have occurred');
     }
   });
 });
@@ -155,6 +151,10 @@ module(
     moduleForIntegration(hooks);
 
     hooks.beforeEach(async function () {
+      // This replaces database and adapter previously instantiated in
+      // `module-for-pouch-acceptance` with new ones bound to
+      // `taco-salad` model.
+      // This is OK, but we should do this in another way, probably.
       await this.db().destroy();
 
       this.adapter = function adapter() {
@@ -164,7 +164,7 @@ module(
         return this.adapter().db;
       };
 
-      return this.db().bulkDocs([
+      await this.db().bulkDocs([
         {
           _id: 'tacoSalad_2_A',
           data: { flavor: 'al pastor', ingredients: ['X', 'Y'] },
@@ -198,7 +198,7 @@ module(
         data: { flavor: 'sofritas' },
       });
 
-      await delay(15);
+      await delay(10);
 
       const alreadyLoadedSaladC = this.store().peekRecord('taco-salad', 'C');
       assert.ok(
