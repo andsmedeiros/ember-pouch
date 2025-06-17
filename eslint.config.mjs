@@ -47,6 +47,13 @@ export default defineConfig([
     ),
 
     rules: {
+      'no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: '^_',
+        },
+      ],
+
       'qunit/resolve-async': 0,
       'ember/no-test-module-for': 0,
       'ember/no-classic-classes': 0,
@@ -55,7 +62,7 @@ export default defineConfig([
 
   {
     files: [
-      './eslint.config.js',
+      './eslint.config.mjs',
       './.prettierrc.js',
       './.template-lintrc.js',
       './ember-cli-build.js',
@@ -85,7 +92,8 @@ export default defineConfig([
     extends: compat.extends('plugin:n/recommended'),
 
     rules: Object.assign({}, node.configs.recommended.rules, {
-      'node/no-unpublished-require': 'off',
+      'n/no-unpublished-require': 'off',
+      'n/no-unpublished-import': 'off',
     }),
   },
 
