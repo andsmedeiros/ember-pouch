@@ -1,8 +1,8 @@
 import { attr } from '@ember-data/model';
 import { Model } from 'ember-pouch';
 
-export default Model.extend({
-  name: attr('string'),
-  series: attr('string'),
-  debut: attr(),
-});
+export default class SmasherModel extends Model {
+  @attr('string') name;
+  @attr('string') series;
+  @attr debut;
+}

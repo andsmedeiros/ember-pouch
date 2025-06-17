@@ -1,7 +1,7 @@
 import { attr, hasMany } from '@ember-data/model';
 import { Model } from 'ember-pouch';
 
-export default Model.extend({
-  flavor: attr('string'),
-  ingredients: hasMany('food-item', { inverse: 'soup', async: true }),
-});
+export default class TacoSoupModel extends Model {
+  @attr('string') flavor;
+  @hasMany('food-item', { inverse: 'soup', async: true }) ingredients;
+}
