@@ -1,63 +1,74 @@
-import { defer } from 'rsvp';
 import { assert } from '@ember/debug';
-import { isEmpty } from '@ember/utils';
-import { Adapter } from 'ember-pouch';
-import PouchDB from 'dummy/pouchdb';
+import { isPresent } from '@ember/utils';
+import { Adapter, PouchDB } from 'ember-pouch';
 import config from 'dummy/config/environment';
 
-function createDb() {
-  let localDb = config.emberPouch.localDb;
+function createDatabase() {
+  const {
+    localDb: localDatabasePath,
+    remoteDb: remoteDatabasePath,
+    remote = false,
+  } = config.emberPouch ?? {};
+  assert('emberPouch.localDb must be set', isPresent(localDatabasePath));
 
-  assert('emberPouch.localDb must be set', !isEmpty(localDb));
+  const localDb = new PouchDB(localDatabasePath);
 
-  let db = new PouchDB(localDb);
-
-  if (config.emberPouch.remote) {
-    let remoteDb = new PouchDB(config.emberPouch.remoteDb);
-
-    db.sync(remoteDb, {
+  if (remote) {
+    const remoteDb = new PouchDB(remoteDatabasePath);
+    localDb.sync(remoteDb, {
       live: true,
       retry: true,
     });
   }
 
-  return db;
+  return localDb;
 }
 
 export default class ApplicationAdapter extends Adapter {
+  #eventRelay = new EventTarget();
+
   constructor(owner) {
-    super(owner, createDb());
+    super(owner, createDatabase());
   }
 
   prepare(store, type, indexPromises) {
-    type.eachRelationship((name, rel) => {
-      rel.options.async = config.emberPouch.async;
-      if (rel.kind === 'hasMany') {
-        rel.options.save = config.emberPouch.saveHasMany;
+    const { async = true, saveHasMany = false } = config.emberPouch ?? {};
+    for (const [_name, relationship] of type.relationshipsByName) {
+      relationship.options.async = async;
+
+      if (relationship.kind === 'hasMany') {
+        relationship.options.save = saveHasMany;
       }
-    });
+    }
 
     return super.prepare(store, type, indexPromises);
   }
 
-  onChangeListenerTest = null;
-  async onChange() {
-    if (super.onChange) {
-      await super.onChange(...arguments);
-    }
-    if (this.onChangeListenerTest) {
-      this.onChangeListenerTest(...arguments);
-    }
+  async onChange(target) {
+    await super.onChange(target);
+    this.#eventRelay.dispatchEvent(
+      new CustomEvent('change', { detail: target }),
+    );
   }
 
   waitForChangeWithID(id) {
-    let defered = defer();
-    this.onChangeListenerTest = (c) => {
-      if (c.id === id) {
-        this.onChangeListenerTest = null;
-        defered.resolve(c);
-      }
-    };
-    return defered.promise;
+    return new Promise((resolve) => {
+      const listener = ({ detail: target }) => {
+        if (target.id === id) {
+          resolve(target);
+        }
+      };
+
+      this.#eventRelay.addEventListener('change', listener, {
+        once: true,
+      });
+    });
+  }
+
+  async unloadedDocumentChanged(obj) {
+    const recordModel = this.store.modelFor(obj.type);
+    const recordTypeName = this.getRecordTypeName(recordModel);
+    const doc = await this.db.rel.find(recordTypeName, obj.id);
+    await this.store.pushPayload(recordTypeName, doc);
   }
 }
