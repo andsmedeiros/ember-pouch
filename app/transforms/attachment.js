@@ -1,1 +1,3 @@
-export { default } from 'ember-pouch/transforms/attachment';
+import AttachmentTransform from 'ember-pouch/transforms/attachment';
+
+export default AttachmentTransform;
