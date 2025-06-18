@@ -407,28 +407,16 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       assert.strictEqual(db.rel, undefined, 'should start without schema');
 
       const adapter = this.adapter();
-      const promises = [
-        adapter.prepare(this.store(), this.store().modelFor('taco-soup')),
-      ];
+      await adapter.prepare(this.store(), this.store().modelFor('taco-soup'));
 
       assert.notEqual(db.rel, undefined, 'prepare should set schema');
       assert.strictEqual(
-        adapter._schema.length,
+        adapter.schema.length,
         2,
         'should have set all relationships on the schema',
       );
 
-      promises.push(
-        adapter.prepare(this.store(), this.store().modelFor('taco-soup')),
-      );
-
-      let success = false;
-      try {
-        await Promise.all(promises);
-        success = true;
-      } finally {
-        assert.true(success, 'Promise returned by `prepare` rejected');
-      }
+      await adapter.prepare(this.store(), this.store().modelFor('taco-soup'));
     });
 
     test('delete cascade null', async function (assert) {

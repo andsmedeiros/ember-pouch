@@ -19,7 +19,6 @@ export default function (hooks) {
   });
 
   hooks.afterEach(async function () {
-    await Promise.all(this.adapter().indexPromises);
     const db = this.db();
 
     const { indexes } = await db.getIndexes();

@@ -31,7 +31,7 @@ export default class ApplicationAdapter extends Adapter {
     super(owner, createDatabase());
   }
 
-  prepare(store, type, indexPromises) {
+  prepare(store, type) {
     const { async = true, saveHasMany = false } = config.emberPouch ?? {};
     for (const [_name, relationship] of type.relationshipsByName) {
       relationship.options.async = async;
@@ -41,7 +41,7 @@ export default class ApplicationAdapter extends Adapter {
       }
     }
 
-    return super.prepare(store, type, indexPromises);
+    return super.prepare(store, type);
   }
 
   async onChange(target) {
