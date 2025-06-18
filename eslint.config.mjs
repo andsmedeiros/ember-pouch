@@ -21,7 +21,7 @@ export default defineConfig([
   {
     languageOptions: {
       parser: babelParser,
-      ecmaVersion: 2018,
+      ecmaVersion: 'latest',
       sourceType: 'module',
 
       parserOptions: {
@@ -59,12 +59,9 @@ export default defineConfig([
         'error',
         {
           varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
         },
       ],
-
-      'qunit/resolve-async': 0,
-      'ember/no-test-module-for': 0,
-      'ember/no-classic-classes': 0,
     },
   },
 
@@ -108,13 +105,6 @@ export default defineConfig([
   {
     files: ['tests/**/*-test.{js,ts}'],
     extends: compat.extends('plugin:qunit/recommended'),
-
-    rules: {
-      'qunit/resolve-async': 0,
-      'qunit/no-assert-logical-expression': 0,
-      'qunit/no-ok-equality': 0,
-      'qunit/no-negated-ok': 0,
-    },
   },
 
   globalIgnores([
