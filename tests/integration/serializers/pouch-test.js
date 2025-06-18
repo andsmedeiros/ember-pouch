@@ -1,10 +1,10 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
-import moduleForIntegration from '../../helpers/module-for-pouch-acceptance';
+import installContext from '../../helpers/install-context';
 
 module('Integration | Serializer | Attachments', function (hooks) {
   setupTest(hooks);
-  moduleForIntegration(hooks);
+  installContext(hooks);
 
   const id = 'E';
   const coverImage = {

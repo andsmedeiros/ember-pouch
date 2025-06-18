@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
-import moduleForIntegration from '../../helpers/module-for-pouch-acceptance';
+import installContext from '../../helpers/install-context';
 
 /*
  * Tests for the default automatic change listener.
@@ -12,7 +12,7 @@ function delay(timeout) {
 
 module('Integration | Adapter | Default Change Watcher', function (hooks) {
   setupTest(hooks);
-  moduleForIntegration(hooks);
+  installContext(hooks);
 
   hooks.beforeEach(function () {
     return this.db().bulkDocs([
@@ -148,7 +148,7 @@ module(
   'Integration | Adapter | With unloadedDocumentChanged implementation to load new docs into store',
   function (hooks) {
     setupTest(hooks);
-    moduleForIntegration(hooks);
+    installContext(hooks);
 
     hooks.beforeEach(async function () {
       // This replaces database and adapter previously instantiated in

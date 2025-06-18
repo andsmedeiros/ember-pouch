@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
-import moduleForIntegration from '../../helpers/module-for-pouch-acceptance';
+import installContext from '../../helpers/install-context';
 import config from 'dummy/config/environment';
 
 function delay(timeout) {
@@ -36,7 +36,7 @@ function getDocsForRelations() {
 
 module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
   setupTest(hooks);
-  moduleForIntegration(hooks);
+  installContext(hooks);
 
   function allTests() {
     test('can find all', async function (assert) {

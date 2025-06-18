@@ -1,14 +1,11 @@
 import { getOwner } from '@ember/owner';
 
-export default function (hooks) {
+export default function installContext(hooks) {
   hooks.beforeEach(function () {
     this.store = function store() {
       return getOwner(this).lookup('service:store');
     };
 
-    // At the container level, adapters are not singletons (ember-data
-    // manages them). To get the instance that the app is using, we have to
-    // go through the store.
     this.adapter = function adapter() {
       return this.store().adapterFor('taco-soup');
     };
