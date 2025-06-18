@@ -5,12 +5,7 @@ import { getOwner } from '@ember/owner';
 import { registerDestructor } from '@ember/destroyable';
 import { classify, camelize } from '@ember/string';
 import { pluralize } from 'ember-inflector';
-
-import {
-  extractDeleteRecord,
-  shouldSaveRelationship,
-  configFlagDisabled,
-} from '../utils';
+import { shouldSaveRelationship, configFlagDisabled } from '../utils';
 
 function defer() {
   let settlers;
@@ -25,11 +20,12 @@ export default class PouchAdapter extends RESTAdapter {
   #waitingForConsistency = new Map();
   #createdRecords = new Set();
   #knownModels = new Set();
+  #schema = [];
+
   #onChangeListener = (change) => this.onChange(change);
-  #schema;
 
   get schema() {
-    return this.#schema ?? [];
+    return this.#schema;
   }
 
   constructor(owner, db) {
@@ -64,11 +60,105 @@ export default class PouchAdapter extends RESTAdapter {
     this.changes.cancel();
   }
 
-  // The change listener ensures that individual records are kept up to date
-  // when the data in the database changes. This makes ember-data 2.0's record
-  // reloading redundant.
-  shouldBackgroundReloadRecord() {
-    return false;
+  #recordToData(store, type, record) {
+    // Though it would work to use the default recordTypeName for modelName &
+    // serializerKey here, these uses are conceptually distinct and may vary
+    // independently.
+    const serializerKey = camelize(type.modelName);
+    const serializer = store.serializerFor(type.modelName);
+    const serializedHash = {};
+    serializer.serializeIntoHash(serializedHash, type, record, {
+      includeId: true,
+    });
+
+    return serializedHash[serializerKey];
+  }
+
+  /**
+   * Return key that conform to data adapter
+   * ex: 'name' become 'data.name'
+   */
+  #dataKey(key) {
+    return `data.${key}`;
+  }
+
+  /**
+   * Returns the modified selector key to comform data key
+   * Ex: selector: {name: 'Mario'} wil become selector: {'data.name': 'Mario'}
+   */
+  #buildSelector(selector) {
+    assert(
+      'Data selector should be a non-null object',
+      typeof selector === 'object' && isPresent(selector),
+    );
+
+    const entries = Object.entries(selector).map(([key, property]) => [
+      this.#dataKey(key),
+      property,
+    ]);
+    return Object.fromEntries(entries);
+  }
+
+  /**
+   * Returns the modified sort key
+   * Ex: sort: ['series'] will become ['data.series']
+   * Ex: sort: [{series: 'desc'}] will became [{'data.series': 'desc'}]
+   */
+  #buildSort(sort) {
+    return sort.map((directive) => {
+      assert(
+        'Sort directive should be a string or a non-null object',
+        typeof directive === 'string' ||
+          (typeof directive === 'object' && isPresent(directive)),
+      );
+
+      if (typeof directive === 'string') {
+        return this.#dataKey(directive);
+      } else {
+        const entries = Object.entries(directive).map(([key, property]) => [
+          this.#dataKey(key),
+          property,
+        ]);
+        return Object.fromEntries(entries);
+      }
+    });
+  }
+
+  async #eventuallyConsistent(type, id) {
+    const deleted = await this.db.rel.isDeleted(type, id);
+    switch (deleted) {
+      case true:
+        throw new Error(
+          `Document of type "${type}" with id "${id}" is deleted.`,
+        );
+
+      case false:
+        return this.#findRecord(type, id);
+
+      // Relational Pouch reports deleted === null when the record is not
+      // in the database yet
+      case null: {
+        const uniqueId = this.db.rel.makeDocID({ type, id });
+        const deferred = defer();
+        this.#waitingForConsistency.set(uniqueId, deferred);
+        return deferred.promise;
+      }
+    }
+  }
+
+  async #saveRecord(store, type, record) {
+    await this.prepare(store, type);
+
+    const data = this.#recordToData(store, type, record);
+    const typeName = this.getRecordTypeName(type);
+    const idAndRev = await this.db.rel.save(typeName, data);
+    Object.assign(data, idAndRev);
+    this.#createdRecords.add(data.id);
+
+    const typeNamePlural = pluralize(typeName);
+    return {
+      [typeNamePlural]: [data],
+    };
   }
 
   changeDb(db) {
@@ -152,6 +242,13 @@ export default class PouchAdapter extends RESTAdapter {
     }
   }
 
+  // The change listener ensures that individual records are kept up to date
+  // when the data in the database changes. This makes ember-data 2.0's record
+  // reloading redundant.
+  shouldBackgroundReloadRecord() {
+    return false;
+  }
+
   unloadedDocumentChanged(_document) {
     /*
      * For performance purposes, we don't load records into the store that haven't previously been loaded.
@@ -175,8 +272,6 @@ export default class PouchAdapter extends RESTAdapter {
 
     const singular = recordTypeName;
     const plural = pluralize(recordTypeName);
-
-    this.#schema ??= [];
 
     // Known, no need to register again
     if (this.#knownModels.has(singular)) {
@@ -254,70 +349,6 @@ export default class PouchAdapter extends RESTAdapter {
     }
 
     this.db.setSchema(this.#schema);
-  }
-
-  #recordToData(store, type, record) {
-    // Though it would work to use the default recordTypeName for modelName &
-    // serializerKey here, these uses are conceptually distinct and may vary
-    // independently.
-    const serializerKey = camelize(type.modelName);
-    const serializer = store.serializerFor(type.modelName);
-    const serializedHash = {};
-    serializer.serializeIntoHash(serializedHash, type, record, {
-      includeId: true,
-    });
-
-    return serializedHash[serializerKey];
-  }
-
-  /**
-   * Return key that conform to data adapter
-   * ex: 'name' become 'data.name'
-   */
-  #dataKey(key) {
-    return `data.${key}`;
-  }
-
-  /**
-   * Returns the modified selector key to comform data key
-   * Ex: selector: {name: 'Mario'} wil become selector: {'data.name': 'Mario'}
-   */
-  #buildSelector(selector) {
-    assert(
-      'Data selector should be a non-null object',
-      typeof selector === 'object' && isPresent(selector),
-    );
-
-    const entries = Object.entries(selector).map(([key, property]) => [
-      this.#dataKey(key),
-      property,
-    ]);
-    return Object.fromEntries(entries);
-  }
-
-  /**
-   * Returns the modified sort key
-   * Ex: sort: ['series'] will become ['data.series']
-   * Ex: sort: [{series: 'desc'}] will became [{'data.series': 'desc'}]
-   */
-  #buildSort(sort) {
-    return sort.map((directive) => {
-      assert(
-        'Sort directive should be a string or a non-null object',
-        typeof directive === 'string' ||
-          (typeof directive === 'object' && isPresent(directive)),
-      );
-
-      if (typeof directive === 'string') {
-        return this.#dataKey(directive);
-      } else {
-        const entries = Object.entries(directive).map(([key, property]) => [
-          this.#dataKey(key),
-          property,
-        ]);
-        return Object.fromEntries(entries);
-      }
-    });
   }
 
   /**
@@ -401,7 +432,7 @@ export default class PouchAdapter extends RESTAdapter {
 
   async findRecord(store, type, id) {
     await this.prepare(store, type);
-    return this.#findRecord(this.getRecordTypeName(type), id);
+    return await this.#findRecord(this.getRecordTypeName(type), id);
   }
 
   async #findRecord(recordTypeName, id) {
@@ -421,80 +452,23 @@ export default class PouchAdapter extends RESTAdapter {
         `Document of type "${recordTypeName}" with id "${id}" not found.`,
       );
     } else {
-      return this.#eventuallyConsistent(recordTypeName, id);
+      return await this.#eventuallyConsistent(recordTypeName, id);
     }
-  }
-
-  #eventuallyConsistent(type, id) {
-    let pouchID = this.db.rel.makeDocID({ type, id });
-    let defered = defer();
-    this.#waitingForConsistency.set(pouchID, defered);
-
-    return this.db.rel.isDeleted(type, id).then((deleted) => {
-      //TODO: should we test the status of the promise here? Could it be handled in onChange already?
-      if (deleted) {
-        this.#waitingForConsistency.delete(pouchID);
-        throw new Error(
-          "Document of type '" + type + "' with id '" + id + "' is deleted.",
-        );
-      } else if (deleted === null) {
-        return defered.promise;
-      } else {
-        assert('Status should be existing', deleted === false);
-        //TODO: should we reject or resolve the promise? or does JS GC still clean it?
-        if (this.#waitingForConsistency.has(pouchID)) {
-          this.#waitingForConsistency.delete(pouchID);
-          return this.#findRecord(type, id);
-        } else {
-          //findRecord is already handled by onChange
-          return defered.promise;
-        }
-      }
-    });
   }
 
   async createRecord(store, type, record) {
-    await this.prepare(store, type);
-    var data = this.#recordToData(store, type, record);
-    let rel = this.db.rel;
-
-    let id = data.id;
-    if (!id) {
-      id = data.id = rel.uuid();
-    }
-    this.#createdRecords.add(id);
-
-    let typeName = this.getRecordTypeName(type);
-    try {
-      let saved = await rel.save(typeName, data);
-      Object.assign(data, saved);
-      let result = {};
-      result[pluralize(typeName)] = [data];
-      return result;
-    } catch (e) {
-      this.#createdRecords.delete(id);
-      throw e;
-    }
+    return await this.#saveRecord(store, type, record);
   }
 
   async updateRecord(store, type, record) {
-    await this.prepare(store, type);
-    var data = this.#recordToData(store, type, record);
-    let typeName = this.getRecordTypeName(type);
-    let saved = await this.db.rel.save(typeName, data);
-    Object.assign(data, saved); //TODO: could only set .rev
-    let result = {};
-    result[pluralize(typeName)] = [data];
-    return result;
+    return await this.#saveRecord(store, type, record);
   }
 
   async deleteRecord(store, type, record) {
     if (record.adapterOptions && record.adapterOptions.serverPush) return;
 
     await this.prepare(store, type);
-    var data = this.#recordToData(store, type, record);
-    return this.db.rel
-      .del(this.getRecordTypeName(type), data)
-      .then(extractDeleteRecord);
+    const data = this.#recordToData(store, type, record);
+    await this.db.rel.del(this.getRecordTypeName(type), data);
   }
 }

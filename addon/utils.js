@@ -1,10 +1,5 @@
 import { getOwner } from '@ember/owner';
 
-// ember-data doesn't like getting a json response of {deleted: true}
-export function extractDeleteRecord() {
-  return null;
-}
-
 //should this take a config?
 export function shouldSaveRelationship(container, relationship) {
   if (typeof relationship.options.save === 'boolean') {
