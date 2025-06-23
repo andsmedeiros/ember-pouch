@@ -9,6 +9,14 @@ const { maybeEmbroider } = require('@embroider/test-setup');
  */
 const IS_EMBROIDER_ENABLED = Boolean(process.env.EMBROIDER_TEST_SETUP_OPTIONS);
 
+const webpackConfig = {
+  devtool: 'source-map',
+};
+
+if (IS_EMBROIDER_ENABLED) {
+  webpackConfig.node = { global: true };
+}
+
 module.exports = function (defaults) {
   let app = new EmberAddon(defaults, {
     emberData: {
@@ -16,6 +24,8 @@ module.exports = function (defaults) {
         DEPRECATE_STORE_EXTENDS_EMBER_OBJECT: false,
       },
     },
+    sourcemaps: { enabled: true },
+    packagerOptions: { webpackConfig },
   });
 
   /*
@@ -31,16 +41,5 @@ module.exports = function (defaults) {
         package: 'qunit',
       },
     ],
-
-    packagerOptions: {
-      webpackConfig:
-        IS_EMBROIDER_ENABLED === false
-          ? {}
-          : {
-              node: {
-                global: true,
-              },
-            },
-    },
   });
 };
