@@ -5,32 +5,14 @@ const { embroiderSafe, embroiderOptimized } = require('@embroider/test-setup');
 
 module.exports = async function () {
   return {
-    useYarn: false,
+    packageManager: 'pnpm',
     scenarios: [
       {
-        name: 'ember-lts-3.16',
+        name: 'ember-4.0',
         npm: {
           devDependencies: {
-            'ember-source': '~3.16.0',
-            'ember-data': '~3.16.0',
-          },
-        },
-      },
-      {
-        name: 'ember-lts-3.24',
-        npm: {
-          devDependencies: {
-            'ember-source': '~3.24.3',
-            'ember-data': '~3.24.0',
-          },
-        },
-      },
-      {
-        name: 'ember-lts-3.28',
-        npm: {
-          devDependencies: {
-            'ember-source': '~3.28.0',
-            'ember-data': '~3.28.7',
+            'ember-source': '~4.0.0',
+            'ember-data': '~4.0.0',
           },
         },
       },
@@ -40,6 +22,24 @@ module.exports = async function () {
           devDependencies: {
             'ember-source': '~4.4.0',
             'ember-data': '~4.4.0',
+          },
+        },
+      },
+      {
+        name: 'ember-lts-4.8',
+        npm: {
+          devDependencies: {
+            'ember-source': '~4.8.0',
+            'ember-data': '~4.8.0',
+          },
+        },
+      },
+      {
+        name: 'ember-lts-4.12',
+        npm: {
+          devDependencies: {
+            'ember-source': '~4.12.0',
+            'ember-data': '~4.12.0',
           },
         },
       },
@@ -78,25 +78,6 @@ module.exports = async function () {
         name: 'ember-default',
         npm: {
           devDependencies: {},
-        },
-      },
-      {
-        name: 'ember-classic',
-        env: {
-          EMBER_OPTIONAL_FEATURES: JSON.stringify({
-            'application-template-wrapper': true,
-            'default-async-observers': false,
-            'template-only-glimmer-components': false,
-          }),
-        },
-        npm: {
-          devDependencies: {
-            'ember-source': '~3.28.0',
-            'ember-data': '~3.28.7',
-          },
-          ember: {
-            edition: 'classic',
-          },
         },
       },
       embroiderSafe(),
