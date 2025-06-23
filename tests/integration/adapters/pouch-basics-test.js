@@ -470,7 +470,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
         'should be 2 food items initially',
       );
 
-      const itemToDelete = liveIngredients[0];
+      const itemToDelete = liveIngredients.objectAt(0);
       const id = 'foodItem_2_' + itemToDelete.id;
       const promise = this.adapter().waitForChangeWithID(id);
       this.db().remove(id, itemToDelete.rev);
