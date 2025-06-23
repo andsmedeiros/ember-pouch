@@ -3,5 +3,5 @@ import { Model } from 'ember-pouch';
 
 export default class TacoSoupModel extends Model {
   @attr('string') flavor;
-  @hasMany('food-item', { inverse: 'soup', async: true }) ingredients;
+  @hasMany('food-item', { async: true, inverse: 'soup' }) ingredients;
 }
