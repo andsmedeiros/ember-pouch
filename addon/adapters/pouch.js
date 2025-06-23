@@ -1,7 +1,7 @@
 import RESTAdapter from '@ember-data/adapter/rest';
 import { assert } from '@ember/debug';
 import { isBlank, isNone, isPresent } from '@ember/utils';
-import { getOwner } from '@ember/owner';
+import { getOwner } from '@ember/application';
 import { registerDestructor } from '@ember/destroyable';
 import { classify, camelize } from '@ember/string';
 import { pluralize } from 'ember-inflector';
@@ -286,9 +286,7 @@ export default class PouchAdapter extends RESTAdapter {
     }
     this.#schema.push(modelSchema);
 
-    const relationships = type.relationshipsByName.entries();
-
-    for (const [name, relationship] of relationships) {
+    for (const [name, relationship] of type.relationshipsByName) {
       assert(
         'Only "belongsTo" and "hasMany" relationships are supported',
         ['belongsTo', 'hasMany'].includes(relationship.kind),
