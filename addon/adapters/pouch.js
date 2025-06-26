@@ -1,7 +1,7 @@
 import RESTAdapter from '@ember-data/adapter/rest';
 import { assert } from '@ember/debug';
 import { isBlank, isNone, isPresent } from '@ember/utils';
-import { getOwner } from '@ember/application';
+import { getOwner } from '@ember/owner';
 import { registerDestructor } from '@ember/destroyable';
 import { classify, camelize } from '@ember/string';
 import { pluralize } from 'ember-inflector';
@@ -102,7 +102,7 @@ export default class PouchAdapter extends RESTAdapter {
   /**
    * Returns the modified sort key
    * Ex: sort: ['series'] will become ['data.series']
-   * Ex: sort: [{series: 'desc'}] will became [{'data.series': 'desc'}]
+   * Ex: sort: [{series: 'desc'}] will become [{'data.series': 'desc'}]
    */
   #buildSort(sort) {
     return sort.map((directive) => {
@@ -191,7 +191,11 @@ export default class PouchAdapter extends RESTAdapter {
       this.#waitingForConsistency.delete(change.id);
 
       if (change.deleted) {
-        promise.reject('deleted');
+        promise.reject(
+          new Error(
+            `Document of type "${obj.type}" with id "${obj.id}" is deleted.`,
+          ),
+        );
       } else {
         const record = await this.#findRecord(obj.type, obj.id);
         promise.resolve(record);
