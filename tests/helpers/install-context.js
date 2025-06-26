@@ -1,4 +1,4 @@
-import { getOwner } from '@ember/application';
+import { getOwner } from '@ember/owner';
 
 export default function installContext(hooks) {
   hooks.beforeEach(function () {

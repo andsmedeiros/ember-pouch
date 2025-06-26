@@ -1,4 +1,4 @@
-import { getOwner } from '@ember/application';
+import { getOwner } from '@ember/owner';
 
 //should this take a config?
 export function shouldSaveRelationship(container, relationship) {
