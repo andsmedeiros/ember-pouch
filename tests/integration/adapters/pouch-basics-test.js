@@ -12,22 +12,22 @@ function savingHasMany() {
 }
 
 function getDocsForRelations() {
-  const tacoSoupC = { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } };
+  const tacoSoupC = { _id: 'taco-soup_2_C', data: { flavor: 'al pastor' } };
   if (savingHasMany()) tacoSoupC.data.ingredients = ['X', 'Y'];
 
-  const tacoSoupD = { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } };
+  const tacoSoupD = { _id: 'taco-soup_2_D', data: { flavor: 'black bean' } };
   if (savingHasMany()) tacoSoupD.data.ingredients = ['Z'];
 
   const foodItemX = {
-    _id: 'foodItem_2_X',
+    _id: 'food-item_2_X',
     data: { name: 'pineapple', soup: 'C' },
   };
   const foodItemY = {
-    _id: 'foodItem_2_Y',
+    _id: 'food-item_2_Y',
     data: { name: 'pork loin', soup: 'C' },
   };
   const foodItemZ = {
-    _id: 'foodItem_2_Z',
+    _id: 'food-item_2_Z',
     data: { name: 'black beans', soup: 'D' },
   };
 
@@ -41,9 +41,9 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
   function allTests() {
     test('can find all', async function (assert) {
       await this.db().bulkDocs([
-        { _id: 'tacoSoup_2_A', data: { flavor: 'al pastor' } },
-        { _id: 'tacoSoup_2_B', data: { flavor: 'black bean' } },
-        { _id: 'burritoShake_2_X', data: { consistency: 'smooth' } },
+        { _id: 'taco-soup_2_A', data: { flavor: 'al pastor' } },
+        { _id: 'taco-soup_2_B', data: { flavor: 'black bean' } },
+        { _id: 'burrito-shake_2_X', data: { consistency: 'smooth' } },
       ]);
 
       const found = await this.store().findAll('taco-soup');
@@ -67,8 +67,8 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
 
     test('can find one', async function (assert) {
       await this.db().bulkDocs([
-        { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
-        { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
+        { _id: 'taco-soup_2_C', data: { flavor: 'al pastor' } },
+        { _id: 'taco-soup_2_D', data: { flavor: 'black bean' } },
       ]);
 
       const found = await this.store().findRecord('taco-soup', 'D');
@@ -173,16 +173,16 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       await this.db().createIndex({ index: { fields: ['data.flavor'] } });
       await this.db().bulkDocs([
         {
-          _id: 'tacoSoup_2_C',
+          _id: 'taco-soup_2_C',
           data: { flavor: 'al pastor', ingredients: ['X', 'Y'] },
         },
         {
-          _id: 'tacoSoup_2_D',
+          _id: 'taco-soup_2_D',
           data: { flavor: 'black bean', ingredients: ['Z'] },
         },
-        { _id: 'foodItem_2_X', data: { name: 'pineapple' } },
-        { _id: 'foodItem_2_Y', data: { name: 'pork loin' } },
-        { _id: 'foodItem_2_Z', data: { name: 'black beans' } },
+        { _id: 'food-item_2_X', data: { name: 'pineapple' } },
+        { _id: 'food-item_2_Y', data: { name: 'pork loin' } },
+        { _id: 'food-item_2_Z', data: { name: 'black beans' } },
       ]);
 
       const found = await this.store().queryRecord('taco-soup', {
@@ -260,7 +260,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       });
       await newSoup.save();
 
-      const newDoc = await this.db().get('tacoSoup_2_E');
+      const newDoc = await this.db().get('taco-soup_2_E');
       assert.strictEqual(
         newDoc.data.flavor,
         'balsamic',
@@ -277,7 +277,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
 
     test('creating an associated record stores a reference to it in the parent', async function (assert) {
       const soupDocument = {
-        _id: 'tacoSoup_2_C',
+        _id: 'taco-soup_2_C',
         data: { flavor: 'al pastor' },
       };
       if (savingHasMany()) soupDocument.data.ingredients = [];
@@ -305,15 +305,15 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
 
     test('update an existing record', async function (assert) {
       await this.db().bulkDocs([
-        { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
-        { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
+        { _id: 'taco-soup_2_C', data: { flavor: 'al pastor' } },
+        { _id: 'taco-soup_2_D', data: { flavor: 'black bean' } },
       ]);
 
       const found = await this.store().findRecord('taco-soup', 'C');
       found.flavor = 'pork';
       await found.save();
 
-      const updatedDoc = await this.db().get('tacoSoup_2_C');
+      const updatedDoc = await this.db().get('taco-soup_2_C');
       assert.strictEqual(
         updatedDoc.data.flavor,
         'pork',
@@ -330,15 +330,15 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
 
     test('delete an existing record', async function (assert) {
       await this.db().bulkDocs([
-        { _id: 'tacoSoup_2_C', data: { flavor: 'al pastor' } },
-        { _id: 'tacoSoup_2_D', data: { flavor: 'black bean' } },
+        { _id: 'taco-soup_2_C', data: { flavor: 'al pastor' } },
+        { _id: 'taco-soup_2_D', data: { flavor: 'black bean' } },
       ]);
 
       const found = await this.store().findRecord('taco-soup', 'C');
       await found.destroyRecord();
 
       assert.rejects(
-        this.db().get('tacoSoup_2_C'),
+        this.db().get('taco-soup_2_C'),
         ({ status }) => status === 404,
         'document should no longer exist',
       );
@@ -350,7 +350,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       assert.timeout(1000);
 
       await this.db().bulkDocs([
-        { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
+        { _id: 'food-item_2_X', data: { name: 'pineapple', soup: 'C' } },
       ]);
 
       const foodItem = await this.store().findRecord('food-item', 'X');
@@ -363,7 +363,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       delay(10)
         .then(() =>
           this.db().bulkDocs([
-            { _id: 'tacoSoup_2_C', data: { flavor: 'test' } },
+            { _id: 'taco-soup_2_C', data: { flavor: 'test' } },
           ]),
         )
         .then(() => (loaded = true));
@@ -383,7 +383,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       assert.timeout(1000);
 
       await this.db().bulkDocs([
-        { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'C' } },
+        { _id: 'food-item_2_X', data: { name: 'pineapple', soup: 'C' } },
       ]);
 
       const foodItem = await this.store().findRecord('food-item', 'X');
@@ -392,7 +392,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
 
       delay(10)
         .then(() =>
-          this.db().bulkDocs([{ _id: 'tacoSoup_2_C', _deleted: true }]),
+          this.db().bulkDocs([{ _id: 'taco-soup_2_C', _deleted: true }]),
         )
         .then(() => (loaded = true));
       assert.false(loaded, 'The record should not have been loaded yet');
@@ -439,7 +439,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       const foodItemZ = await this.store().findRecord('food-item', 'Z');
       const soup = await foodItemZ.soup;
 
-      const id = 'tacoSoup_2_' + soup.id;
+      const id = 'taco-soup_2_' + soup.id;
       const promise = this.adapter().waitForChangeWithID(id);
       this.db().remove(id, soup.rev);
       await promise;
@@ -471,7 +471,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       );
 
       const itemToDelete = liveIngredients[0];
-      const id = `foodItem_2_${itemToDelete.id}`;
+      const id = `food-item_2_${itemToDelete.id}`;
       const promise = this.adapter().waitForChangeWithID(id);
       this.db().remove(id, itemToDelete.rev);
       await promise;

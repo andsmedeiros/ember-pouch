@@ -32,7 +32,7 @@ module('Integration | Serializer | Attachments', function (hooks) {
     });
     await newRecipe.save();
 
-    const newDoc = await this.db().get('tacoRecipe_2_E');
+    const newDoc = await this.db().get('taco-recipe_2_E');
     const attachments = newDoc._attachments;
 
     delete attachments[coverImage.name].revpos;
@@ -71,7 +71,7 @@ module('Integration | Serializer | Attachments', function (hooks) {
       'photo gallery contains both photos',
     );
 
-    const recordInStore = this.store().peekRecord('tacoRecipe', 'E');
+    const recordInStore = this.store().peekRecord('taco-recipe', 'E');
     assert.strictEqual(recordInStore.coverImage.name, coverImage.name);
     assert.strictEqual(recordInStore.coverImage.data, coverImage.data);
 

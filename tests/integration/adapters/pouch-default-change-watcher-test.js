@@ -17,16 +17,16 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
   hooks.beforeEach(function () {
     return this.db().bulkDocs([
       {
-        _id: 'tacoSoup_2_A',
+        _id: 'taco-soup_2_A',
         data: { flavor: 'al pastor', ingredients: ['X', 'Y'] },
       },
       {
-        _id: 'tacoSoup_2_B',
+        _id: 'taco-soup_2_B',
         data: { flavor: 'black bean', ingredients: ['Z'] },
       },
-      { _id: 'foodItem_2_X', data: { name: 'pineapple', soup: 'A' } },
-      { _id: 'foodItem_2_Y', data: { name: 'pork loin', soup: 'A' } },
-      { _id: 'foodItem_2_Z', data: { name: 'black beans', soup: 'B' } },
+      { _id: 'food-item_2_X', data: { name: 'pineapple', soup: 'A' } },
+      { _id: 'food-item_2_Y', data: { name: 'pork loin', soup: 'A' } },
+      { _id: 'food-item_2_Z', data: { name: 'black beans', soup: 'B' } },
     ]);
   });
 
@@ -38,7 +38,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
       'the loaded instance should reflect the initial test data',
     );
 
-    const soupBRecord = await this.db().get('tacoSoup_2_B');
+    const soupBRecord = await this.db().get('taco-soup_2_B');
     soupBRecord.data.flavor = 'carnitas';
     await this.db().put(soupBRecord);
 
@@ -59,7 +59,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
       'test setup: record should not be loaded already',
     );
 
-    const soupARecord = await this.db().get('tacoSoup_2_A');
+    const soupARecord = await this.db().get('taco-soup_2_A');
     soupARecord.data.flavor = 'barbacoa';
     await this.db().put(soupARecord);
 
@@ -80,7 +80,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
     );
 
     await this.db().put({
-      _id: 'tacoSoup_2_C',
+      _id: 'taco-soup_2_C',
       data: { flavor: 'sofritas' },
     });
 
@@ -101,7 +101,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
       'the loaded instance should reflect the initial test data',
     );
 
-    const soupBRecord = await this.db().get('tacoSoup_2_B');
+    const soupBRecord = await this.db().get('taco-soup_2_B');
     await this.db().remove(soupBRecord);
 
     await delay(10);
@@ -133,7 +133,7 @@ module('Integration | Adapter | Default Change Watcher', function (hooks) {
     try {
       await this.store().findRecord('taco-soup', 'B');
       await this.db().put({
-        _id: 'burritoShake_2_X',
+        _id: 'burrito-shake_2_X',
         data: { consistency: 'chunky' },
       });
 
@@ -166,16 +166,16 @@ module(
 
       await this.db().bulkDocs([
         {
-          _id: 'tacoSalad_2_A',
+          _id: 'taco-salad_2_A',
           data: { flavor: 'al pastor', ingredients: ['X', 'Y'] },
         },
         {
-          _id: 'tacoSalad_2_B',
+          _id: 'taco-salad_2_B',
           data: { flavor: 'black bean', ingredients: ['Z'] },
         },
-        { _id: 'foodItem_2_X', data: { name: 'pineapple' } },
-        { _id: 'foodItem_2_Y', data: { name: 'pork loin' } },
-        { _id: 'foodItem_2_Z', data: { name: 'black beans' } },
+        { _id: 'food-item_2_X', data: { name: 'pineapple' } },
+        { _id: 'food-item_2_Y', data: { name: 'pork loin' } },
+        { _id: 'food-item_2_Z', data: { name: 'black beans' } },
       ]);
     });
 
@@ -194,7 +194,7 @@ module(
       );
 
       await this.db().put({
-        _id: 'tacoSalad_2_C',
+        _id: 'taco-salad_2_C',
         data: { flavor: 'sofritas' },
       });
 

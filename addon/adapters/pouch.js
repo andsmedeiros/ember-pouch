@@ -3,7 +3,7 @@ import { assert } from '@ember/debug';
 import { isBlank, isNone, isPresent } from '@ember/utils';
 import { getOwner } from '@ember/owner';
 import { registerDestructor } from '@ember/destroyable';
-import { classify, camelize } from '@ember/string';
+import { classify } from '@ember/string';
 import { pluralize } from 'ember-inflector';
 import { shouldSaveRelationship, configFlagDisabled } from '../utils';
 
@@ -61,11 +61,8 @@ export default class PouchAdapter extends RESTAdapter {
   }
 
   #recordToData(store, type, record) {
-    // Though it would work to use the default recordTypeName for modelName &
-    // serializerKey here, these uses are conceptually distinct and may vary
-    // independently.
-    const serializerKey = camelize(type.modelName);
     const serializer = store.serializerFor(type.modelName);
+    const serializerKey = serializer.payloadKeyFromModelName(type.modelName);
     const serializedHash = {};
     serializer.serializeIntoHash(serializedHash, type, record, {
       includeId: true,
@@ -357,16 +354,23 @@ export default class PouchAdapter extends RESTAdapter {
    * Returns the string to use for the model name part of the PouchDB document
    * ID for records of the given ember-data type.
    *
-   * This method uses the camelized version of the model name in order to
-   * preserve data compatibility with older versions of ember-pouch. See
-   * pouchdb-community/ember-pouch#63 for a discussion.
+   * Historically, this method used the camelized version of the model name in
+   * order to preserve data compatibility with older versions of ember-pouch
+   * (pouchdb-community/ember-pouch#63).
+   * However, this has been deprecated since EmberData 5.3 and planned for
+   * removal at EmberData 6.0 and now, instead, model names should always
+   * be in kebab-case.
+   *
+   * To remove deprecation notes from EmberData, we now return `modelName` as
+   * is, so a model `my-model` will have a PouchDB `_id` equal to
+   * `my-model_${REV}_${ID}`.
    *
    * You can override this to change the behavior. If you do, be aware that you
    * need to execute a data migration to ensure that any existing records are
    * moved to the new IDs.
    */
   getRecordTypeName(type) {
-    return camelize(type.modelName);
+    return type.modelName;
   }
 
   async findAll(store, type /*, sinceToken */) {
@@ -387,7 +391,7 @@ export default class PouchAdapter extends RESTAdapter {
     const inverseRelationship = model.inverseFor(rel.key, store);
     if (inverseRelationship?.kind === 'belongsTo') {
       return await this.db.rel.findHasMany(
-        camelize(rel.type),
+        rel.type,
         inverseRelationship.name,
         record.id,
       );
