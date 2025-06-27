@@ -1,0 +1,104 @@
+{
+  "name": "ember-pouch",
+  "version": "8.0.0-beta.2",
+  "description": "PouchDB adapter for Ember Data",
+  "keywords": [
+    "ember-addon",
+    "Ember",
+    "Octane",
+    "Data",
+    "adapter",
+    "PouchDB",
+    "CouchDB"
+  ],
+  "bugs": {
+    "url": "https://github.com/pouchdb-community/ember-pouch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pouchdb-community/ember-pouch.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Nolan Lawson",
+  "directories": {
+    "doc": "doc",
+    "test": "tests"
+  },
+  "scripts": {
+    "build": "rollup --config",
+    "lint": "concurrently \"pnpm:lint:*(!fix)\" --names \"lint:\"",
+    "lint:css": "stylelint \"**/*.css\" --allow-empty-input --cache\"",
+    "lint:css:fix": "stylelint \"**/*.css\" --allow-empty-input --fix",
+    "lint:fix": "concurrently \"pnpm:lint:*:fix\" --names \"fix:\"",
+    "lint:hbs": "ember-template-lint .",
+    "lint:hbs:fix": "ember-template-lint . --fix",
+    "lint:js": "eslint . --cache",
+    "lint:js:fix": "eslint . --fix",
+    "prepack": "rollup --config",
+    "start": "rollup --config --watch",
+    "test": "echo \"A v2 addon does not have tests, run tests in test-app\""
+  },
+  "dependencies": {
+    "@embroider/addon-shim": "^1.10.0",
+    "ember-inflector": "~6.0.0",
+    "pouchdb-adapter-http": "^9.0.0",
+    "pouchdb-adapter-indexeddb": "^9.0.0",
+    "pouchdb-browser": "^9.0.0",
+    "pouchdb-core": "^9.0.0",
+    "pouchdb-find": "^9.0.0",
+    "pouchdb-mapreduce": "^9.0.0",
+    "pouchdb-replication": "^9.0.0",
+    "relational-pouch": "^4.1.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/runtime": "^7.27.1",
+    "decorator-transforms": "^2.3.0",
+    "@embroider/addon-dev": "^8.0.1",
+    "@eslint/js": "^9.26.0",
+    "@ijlee2-frontend-configs/ember-template-lint": "^2.0.2",
+    "@ijlee2-frontend-configs/eslint-config-ember": "^2.0.3",
+    "@ijlee2-frontend-configs/prettier": "^2.0.2",
+    "@ijlee2-frontend-configs/stylelint": "^2.0.2",
+    "@rollup/plugin-babel": "^6.0.4",
+    "babel-plugin-ember-template-compilation": "^2.4.1",
+    "concurrently": "^9.1.2",
+    "ember-template-lint": "^7.7.0",
+    "eslint": "^9.26.0",
+    "prettier": "^3.5.3",
+    "rollup": "^4.40.2",
+    "rollup-plugin-copy": "^3.5.0",
+    "stylelint": "^16.19.1"
+  },
+  "peerDependencies": {
+    "ember-data": ">=5.0.0",
+    "ember-source": ">=5.0.0",
+    "@ember/string": ">=3.0.0",
+    "@ember-data/adapter": ">=5.0.0",
+    "@ember-data/model": ">=5.0.0",
+    "@ember-data/serializer": ">=5.0.0"
+  },
+  "engines": {
+    "node": ">=18 <22"
+  },
+  "ember": {
+    "edition": "octane"
+  },
+  "ember-addon": {
+    "app-js": {},
+    "main": "addon-main.cjs",
+    "type": "addon",
+    "version": 2
+  },
+  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js",
+    "./addon-main.js": "./addon-main.cjs"
+  },
+  "files": [
+    "addon-main.cjs",
+    "blueprints",
+    "dist"
+  ]
+}

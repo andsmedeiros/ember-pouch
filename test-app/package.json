@@ -1,0 +1,95 @@
+{
+  "name": "test-app",
+  "version": "8.0.0-beta.2",
+  "description": "PouchDB adapter for Ember Data",
+  "keywords": [
+    "Ember",
+    "Octane",
+    "Data",
+    "adapter",
+    "PouchDB",
+    "CouchDB"
+  ],
+  "bugs": {
+    "url": "https://github.com/pouchdb-community/ember-pouch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pouchdb-community/ember-pouch.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Nolan Lawson",
+  "directories": {
+    "doc": "doc",
+    "test": "tests"
+  },
+  "scripts": {
+    "build": "ember build --environment=production",
+    "lint": "concurrently \"pnpm:lint:*(!fix)\" --names \"lint:\"",
+    "lint:css": "stylelint \"**/*.css\" --allow-empty-input --cache\"",
+    "lint:css:fix": "stylelint \"**/*.css\" --allow-empty-input --fix",
+    "lint:fix": "concurrently \"pnpm:lint:*:fix\" --names \"fix:\"",
+    "lint:hbs": "ember-template-lint .",
+    "lint:hbs:fix": "ember-template-lint . --fix",
+    "lint:js": "eslint . --cache",
+    "lint:js:fix": "eslint . --fix",
+    "start": "ember serve",
+    "test": "ember test",
+    "test:ember-compatibility": "ember try:one"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.27.5",
+    "@babel/plugin-proposal-decorators": "^7.27.1",
+    "@ember/optional-features": "^2.2.0",
+    "@ember/string": "^4.0.1",
+    "@ember/test-helpers": "^5.2.2",
+    "@embroider/broccoli-side-watch": "^1.1.0",
+    "@embroider/macros": "^1.17.2",
+    "@embroider/test-setup": "^4.0.0",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.26.0",
+    "@ijlee2-frontend-configs/ember-template-lint": "^2.0.2",
+    "@ijlee2-frontend-configs/eslint-config-ember": "^2.0.3",
+    "@ijlee2-frontend-configs/prettier": "^2.0.2",
+    "@ijlee2-frontend-configs/stylelint": "^2.0.2",
+    "concurrently": "^9.1.2",
+    "ember-auto-import": "^2.10.0",
+    "ember-cli": "^6.4.0",
+    "ember-cli-babel": "^8.2.0",
+    "ember-cli-deprecation-workflow": "^3.3.0",
+    "ember-cli-htmlbars": "^6.3.0",
+    "ember-cli-inject-live-reload": "^2.1.0",
+    "ember-cli-terser": "^4.0.2",
+    "ember-data": "~5.3.0",
+    "ember-inflector": "~6.0.0",
+    "ember-load-initializers": "^3.0.0",
+    "ember-pouch": "workspace:",
+    "ember-qunit": "^7.0.0",
+    "ember-resolver": "^13.1.1",
+    "ember-source": "~5.4.0",
+    "ember-source-channel-url": "^3.0.0",
+    "ember-template-lint": "^7.7.0",
+    "ember-try": "^4.0.0",
+    "eslint": "^9.26.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-ember": "^12.5.0",
+    "eslint-plugin-n": "^17.20.0",
+    "eslint-plugin-prettier": "^5.4.1",
+    "eslint-plugin-qunit": "^8.1.2",
+    "globals": "^16.2.0",
+    "license-checker": "^25.0.1",
+    "loader.js": "^4.7.0",
+    "prettier": "^3.5.3",
+    "qunit": "^2.24.1",
+    "stylelint": "^16.19.1",
+    "webpack": "^5.99.7"
+  },
+  "engines": {
+    "node": ">=18 <22"
+  },
+  "ember": {
+    "edition": "octane"
+  },
+  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac",
+  "private": true
+}

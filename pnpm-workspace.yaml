@@ -1,2 +1,3 @@
-onlyBuiltDependencies:
-  - core-js
+packages:
+  - 'ember-pouch'
+  - 'test-app'

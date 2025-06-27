@@ -1,102 +1,22 @@
 {
-  "name": "ember-pouch",
+  "name": "workspace-root",
   "version": "8.0.0-beta.2",
-  "description": "PouchDB adapter for Ember Data",
-  "keywords": [
-    "ember-addon",
-    "Ember",
-    "Octane",
-    "Data",
-    "adapter",
-    "PouchDB",
-    "CouchDB"
-  ],
-  "bugs": {
-    "url": "https://github.com/pouchdb-community/ember-pouch/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pouchdb-community/ember-pouch.git"
-  },
-  "license": "Apache-2.0",
-  "author": "Nolan Lawson",
-  "directories": {
-    "doc": "doc",
-    "test": "tests"
-  },
+  "private": true,
+  "repository": "",
+  "license": "MIT",
+  "author": "",
   "scripts": {
-    "build": "ember build --environment=production",
-    "format": "prettier . --cache --write",
-    "lint": "eslint . --cache",
-    "lint:fix": "eslint . --fix && npm run format",
-    "lint:format": "prettier . --cache --check",
-    "start": "ember serve",
-    "test": "concurrently \"npm:lint\" \"npm:test:*\" --names \"lint,test:\" --prefixColors auto",
-    "test:ember": "ember test",
-    "test:ember-compatibility": "ember try:each"
-  },
-  "dependencies": {
-    "@babel/core": "^7.27.1",
-    "@ember/string": "^3.0.0",
-    "ember-auto-import": "^2.10.0",
-    "ember-cli-babel": "^8.2.0",
-    "ember-cli-htmlbars": "^6.3.0",
-    "pouchdb-adapter-http": "^9.0.0",
-    "pouchdb-adapter-indexeddb": "^9.0.0",
-    "pouchdb-browser": "^9.0.0",
-    "pouchdb-core": "^9.0.0",
-    "pouchdb-find": "^9.0.0",
-    "pouchdb-mapreduce": "^9.0.0",
-    "pouchdb-replication": "^9.0.0",
-    "relational-pouch": "^4.1.1"
+    "build": "pnpm --filter ember-pouch build",
+    "lint": "pnpm --filter \"*\" lint",
+    "lint:fix": "pnpm --filter \"*\" lint:fix",
+    "prepare": "pnpm build",
+    "start": "concurrently \"pnpm:start:*\" --restart-after 5000 --prefix-colors cyan,white,yellow",
+    "start:addon": "pnpm --filter ember-pouch start",
+    "start:test-app": "pnpm --filter test-app start",
+    "test": "pnpm --filter test-app test"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.27.5",
-    "@babel/plugin-proposal-decorators": "^7.27.1",
-    "@ember/optional-features": "^2.2.0",
-    "@ember/test-helpers": "^3.3.1",
-    "@embroider/macros": "^1.17.2",
-    "@embroider/test-setup": "^4.0.0",
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.28.0",
-    "concurrently": "^9.1.2",
-    "ember-cli": "~5.0.0",
-    "ember-cli-deprecation-workflow": "^3.3.0",
-    "ember-cli-inject-live-reload": "^2.1.0",
-    "ember-cli-terser": "^4.0.2",
-    "ember-data": "~5.0.0",
-    "ember-inflector": "~4.0.0",
-    "ember-load-initializers": "^3.0.0",
-    "ember-qunit": "^7.0.0",
-    "ember-resolver": "^13.1.1",
-    "ember-source": "~5.0.0",
-    "ember-source-channel-url": "^3.0.0",
-    "ember-try": "^4.0.0",
-    "eslint": "^9.28.0",
-    "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-ember": "^12.5.0",
-    "eslint-plugin-n": "^17.20.0",
-    "eslint-plugin-prettier": "^5.4.1",
-    "eslint-plugin-qunit": "^8.1.2",
-    "globals": "^16.2.0",
-    "license-checker": "^25.0.1",
-    "loader.js": "^4.7.0",
-    "prettier": "^3.5.3",
-    "qunit": "^2.24.1",
-    "webpack": "^5.99.7"
+    "concurrently": "^9.1.2"
   },
-  "peerDependencies": {
-    "ember-data": ">=5.0.0",
-    "ember-source": ">=5.0.0"
-  },
-  "engines": {
-    "node": ">=18 <22"
-  },
-  "ember": {
-    "edition": "octane"
-  },
-  "ember-addon": {
-    "configPath": "tests/dummy/config"
-  },
-  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
+  "packageManager": "pnpm@9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1"
 }
