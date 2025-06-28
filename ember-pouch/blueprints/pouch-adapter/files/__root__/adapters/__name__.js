@@ -1,15 +1,15 @@
-import config from '<%= dasherizedPackageName %>/config/environment';
-import { Adapter } from 'ember-pouch';
 import { assert } from '@ember/debug';
 import { isEmpty } from '@ember/utils';
-
+import { Adapter } from 'ember-pouch';
+import HttpPouch from 'pouchdb-adapter-http';
+import indexeddb from 'pouchdb-adapter-indexeddb';
 import PouchDB from 'pouchdb-core';
 import PouchDBFind from 'pouchdb-find';
-import PouchDBRelational from 'relational-pouch';
-import indexeddb from 'pouchdb-adapter-indexeddb';
-import HttpPouch from 'pouchdb-adapter-http';
 import mapreduce from 'pouchdb-mapreduce';
 import replication from 'pouchdb-replication';
+import PouchDBRelational from 'relational-pouch';
+
+import config from '<%= dasherizedPackageName %>/config/environment';
 
 PouchDB.plugin(PouchDBFind)
   .plugin(PouchDBRelational)

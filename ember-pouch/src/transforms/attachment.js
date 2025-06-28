@@ -1,4 +1,5 @@
 import { isNone } from '@ember/utils';
+
 import AttachmentsTransform from './attachments';
 
 export default class AttachmentTransform extends AttachmentsTransform {

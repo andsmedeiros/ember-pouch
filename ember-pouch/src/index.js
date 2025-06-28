@@ -1,6 +1,6 @@
-import Model from './models/pouch';
 import Adapter from './adapters/pouch';
-import Serializer from './serializers/pouch';
+import Model from './models/pouch';
 import PouchDB from './pouchdb';
+import Serializer from './serializers/pouch';
 
-export { Model, Adapter, Serializer, PouchDB };
+export { Adapter, Model, PouchDB,Serializer };

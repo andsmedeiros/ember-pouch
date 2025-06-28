@@ -6,7 +6,7 @@ export function shouldSaveRelationship(container, relationship) {
     return relationship.options.save;
   }
 
-  if (relationship.kind === 'belongsTo') return true;
+  if (relationship.kind === 'belongsTo') {return true;}
 
   //TODO: save default locally? probably on container?
   return configFlagEnabled(container, 'saveHasMany');

@@ -1,4 +1,5 @@
 import RESTSerializer from '@ember-data/serializer/rest';
+
 import { shouldSaveRelationship } from '../utils';
 
 export default class PouchSerializer extends RESTSerializer {
@@ -6,11 +7,37 @@ export default class PouchSerializer extends RESTSerializer {
     return ['attachment', 'attachments'].includes(attribute.type);
   }
 
-  shouldSerializeHasMany(snapshot, key, relationship) {
-    return shouldSaveRelationship(this, relationship);
-  }
+  extractAttributes(modelClass, resourceHash) {
+    const attributes = super.extractAttributes(modelClass, resourceHash);
 
-  serializeAttribute(snapshot, json, key, attribute) {
+    for (const key of modelClass.transformedAttributes.keys()) {
+      const attribute = modelClass.attributes.get(key);
+      if (this.#isAttachment(attribute)) {
+        // put the corresponding _attachments entries from the response into the attribute
+        for (const fileName of Object.keys(attributes[key])) {
+          attributes[key][fileName] = resourceHash.attachments[fileName];
+        }
+      }
+    }
+
+    return attributes;
+  }
+extractRelationships(modelClass, ...args) {
+    const relationships = super.extractRelationships(modelClass, ...args);
+
+    for (const [name, relationship] of modelClass.relationshipsByName) {
+      if (
+        relationship.kind === 'hasMany' &&
+        !shouldSaveRelationship(this, relationship) &&
+        !!relationship.options.async
+      ) {
+        relationships[name] = { links: { related: name } };
+      }
+    }
+
+    return relationships;
+  }
+serializeAttribute(snapshot, json, key, attribute) {
     super.serializeAttribute(snapshot, json, key, attribute);
 
     if (this.#isAttachment(attribute)) {
@@ -40,36 +67,13 @@ export default class PouchSerializer extends RESTSerializer {
       json[payloadKey] = serialized;
     }
   }
-
-  extractAttributes(modelClass, resourceHash) {
-    const attributes = super.extractAttributes(modelClass, resourceHash);
-
-    for (const key of modelClass.transformedAttributes.keys()) {
-      const attribute = modelClass.attributes.get(key);
-      if (this.#isAttachment(attribute)) {
-        // put the corresponding _attachments entries from the response into the attribute
-        for (const fileName of Object.keys(attributes[key])) {
-          attributes[key][fileName] = resourceHash.attachments[fileName];
-        }
-      }
-    }
-
-    return attributes;
+shouldSerializeHasMany(snapshot, key, relationship) {
+    return shouldSaveRelationship(this, relationship);
   }
 
-  extractRelationships(modelClass, ...args) {
-    const relationships = super.extractRelationships(modelClass, ...args);
+  
 
-    for (const [name, relationship] of modelClass.relationshipsByName) {
-      if (
-        relationship.kind === 'hasMany' &&
-        !shouldSaveRelationship(this, relationship) &&
-        !!relationship.options.async
-      ) {
-        relationships[name] = { links: { related: name } };
-      }
-    }
+  
 
-    return relationships;
-  }
+  
 }

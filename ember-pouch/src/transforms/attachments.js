@@ -1,5 +1,5 @@
-import Transform from '@ember-data/serializer/transform';
 import { isNone } from '@ember/utils';
+import Transform from '@ember-data/serializer/transform';
 
 export default class AttachmentsTransform extends Transform {
   deserialize(serialized) {

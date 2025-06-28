@@ -6,7 +6,7 @@ import { isBlank, isNone, isPresent } from '@ember/utils';
 import RESTAdapter from '@ember-data/adapter/rest';
 import { pluralize } from 'ember-inflector';
 
-import { configFlagDisabled,shouldSaveRelationship } from '../utils';
+import { configFlagDisabled,shouldSaveRelationship } from '../utils.js';
 
 function defer() {
   let settlers;
@@ -19,16 +19,10 @@ function defer() {
 
 export default class PouchAdapter extends RESTAdapter {
   #createdRecords = new Set();
-#knownModels = new Set();
-#onChangeListener = (change) => this.onChange(change);
-#schema = [];
-#waitingForConsistency = new Map();
-
-
-
-
-
-
+  #knownModels = new Set();
+  #onChangeListener = (change) => this.onChange(change);
+  #schema = [];
+  #waitingForConsistency = new Map();
 
   get schema() {
     return this.#schema;
@@ -46,7 +40,7 @@ export default class PouchAdapter extends RESTAdapter {
    * Returns the modified selector key to comform data key
    * Ex: selector: {name: 'Mario'} wil become selector: {'data.name': 'Mario'}
    */
-#buildSelector(selector) {
+  #buildSelector(selector) {
     assert(
       'Data selector should be a non-null object',
       typeof selector === 'object' && isPresent(selector),
@@ -58,12 +52,13 @@ export default class PouchAdapter extends RESTAdapter {
     ]);
     return Object.fromEntries(entries);
   }
-/**
+
+  /**
    * Returns the modified sort key
    * Ex: sort: ['series'] will become ['data.series']
    * Ex: sort: [{series: 'desc'}] will become [{'data.series': 'desc'}]
    */
-#buildSort(sort) {
+  #buildSort(sort) {
     return sort.map((directive) => {
       assert(
         'Sort directive should be a string or a non-null object',
@@ -82,14 +77,15 @@ export default class PouchAdapter extends RESTAdapter {
       }
     });
   }
-/**
+  /**
    * Return key that conform to data adapter
    * ex: 'name' become 'data.name'
    */
-#dataKey(key) {
+  #dataKey(key) {
     return `data.${key}`;
   }
-async #eventuallyConsistent(type, id) {
+
+  async #eventuallyConsistent(type, id) {
     const deleted = await this.db.rel.isDeleted(type, id);
     switch (deleted) {
       case true:
@@ -110,7 +106,8 @@ async #eventuallyConsistent(type, id) {
       }
     }
   }
-async #findRecord(recordTypeName, id) {
+
+  async #findRecord(recordTypeName, id) {
     const pouchDocument = await this.db.rel.find(recordTypeName, id);
 
     if (isPresent(pouchDocument)) {
@@ -130,7 +127,8 @@ async #findRecord(recordTypeName, id) {
       return await this.#eventuallyConsistent(recordTypeName, id);
     }
   }
-#recordToData(store, type, record) {
+
+  #recordToData(store, type, record) {
     const serializer = store.serializerFor(type.modelName);
     const serializerKey = serializer.payloadKeyFromModelName(type.modelName);
     const serializedHash = {};
@@ -140,7 +138,8 @@ async #findRecord(recordTypeName, id) {
 
     return serializedHash[serializerKey];
   }
-async #saveRecord(store, type, record) {
+
+  async #saveRecord(store, type, record) {
     await this.prepare(store, type);
 
     const data = this.#recordToData(store, type, record);
@@ -154,7 +153,8 @@ async #saveRecord(store, type, record) {
       [typeNamePlural]: [data],
     };
   }
-#startChangesToStoreListener() {
+
+  #startChangesToStoreListener() {
     assert(
       'Attempted to set a PouchDB change listener, but the adapter is already listening for changes',
       isNone(this.changes),
@@ -178,26 +178,6 @@ async #saveRecord(store, type, record) {
     this.changes.cancel();
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   changeDb(db) {
     this.#stopChangesListener();
 
@@ -212,19 +192,22 @@ async #saveRecord(store, type, record) {
   async createRecord(store, type, record) {
     return await this.#saveRecord(store, type, record);
   }
-async deleteRecord(store, type, record) {
+
+  async deleteRecord(store, type, record) {
     if (record.adapterOptions && record.adapterOptions.serverPush) {return;}
 
     await this.prepare(store, type);
     const data = this.#recordToData(store, type, record);
     await this.db.rel.del(this.getRecordTypeName(type), data);
   }
-async findAll(store, type /*, sinceToken */) {
+
+  async findAll(store, type /*, sinceToken */) {
     // TODO: use sinceToken
     await this.prepare(store, type);
     return this.db.rel.find(this.getRecordTypeName(type));
   }
-async findHasMany(store, record, link, rel) {
+
+  async findHasMany(store, record, link, rel) {
     const model = store.modelFor(record.modelName);
     await this.prepare(store, model);
 
@@ -239,15 +222,18 @@ async findHasMany(store, record, link, rel) {
       return { [pluralize(rel.type)]: [] };
     }
   }
-async findMany(store, type, ids) {
+
+  async findMany(store, type, ids) {
     await this.prepare(store, type);
     return this.db.rel.find(this.getRecordTypeName(type), ids);
   }
-async findRecord(store, type, id) {
+
+  async findRecord(store, type, id) {
     await this.prepare(store, type);
     return await this.#findRecord(this.getRecordTypeName(type), id);
   }
-/**
+
+  /**
    * Returns the string to use for the model name part of the PouchDB document
    * ID for records of the given ember-data type.
    *
@@ -266,10 +252,11 @@ async findRecord(store, type, id) {
    * need to execute a data migration to ensure that any existing records are
    * moved to the new IDs.
    */
-getRecordTypeName(type) {
+  getRecordTypeName(type) {
     return type.modelName;
   }
-async onChange(change) {
+
+  async onChange(change) {
     // If relational_pouch isn't prepared yet, there can't be any records
     // in the store to update.
     if (isNone(this.db.rel)) {
@@ -433,7 +420,8 @@ async onChange(change) {
 
     this.db.setSchema(this.#schema);
   }
-async query(store, type, query) {
+
+  async query(store, type, query) {
     await this.prepare(store, type);
 
     const queryParams = {
@@ -458,7 +446,18 @@ async query(store, type, query) {
       pouchDocument.docs,
     );
   }
-// reloading redundant.
+
+  async queryRecord(store, type, query) {
+    const results = await this.query(store, type, query);
+    const recordTypeName = this.getRecordTypeName(type);
+    const recordTypeNamePlural = pluralize(recordTypeName);
+
+    results[recordTypeName] = results[recordTypeNamePlural][0] ?? null;
+    delete results[recordTypeNamePlural];
+    return results;
+  }
+
+  // reloading redundant.
   shouldBackgroundReloadRecord() {
     return false;
   }
@@ -474,43 +473,7 @@ async query(store, type, query) {
      */
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  async queryRecord(store, type, query) {
-    const results = await this.query(store, type, query);
-    const recordTypeName = this.getRecordTypeName(type);
-    const recordTypeNamePlural = pluralize(recordTypeName);
-
-    results[recordTypeName] = results[recordTypeNamePlural][0] ?? null;
-    delete results[recordTypeNamePlural];
-    return results;
-  }
-
-
-
-
-
-
-
-
-async updateRecord(store, type, record) {
+  async updateRecord(store, type, record) {
     return await this.#saveRecord(store, type, record);
   }
-
-
 }
