@@ -1,8 +1,6 @@
-import { attr, belongsTo, hasMany } from '@ember-data/model';
 import { Model } from 'ember-pouch';
+<%= importedModules.length ? `import { ${importedModules} } from '@ember-data/model';` : '' %>
 
-export default class <%= camelizedModuleName %>Model extends Model {
-  // @attr('string') name;
-  // @belongsTo('author') author;
-  // @hasMany('comments') comments;
+export default class <%= classifiedModuleName %>Model extends Model {
+  <%= attrs.length ? attrs : '' %>
 }
