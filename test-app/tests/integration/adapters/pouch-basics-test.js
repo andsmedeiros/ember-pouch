@@ -1,7 +1,8 @@
-import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
-import installContext from '../../helpers/install-context';
+import { module, test } from 'qunit';
 import config from 'test-app/config/environment';
+
+import installContext from '../../helpers/install-context';
 
 function delay(timeout) {
   return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -13,10 +14,10 @@ function savingHasMany() {
 
 function getDocsForRelations() {
   const tacoSoupC = { _id: 'taco-soup_2_C', data: { flavor: 'al pastor' } };
-  if (savingHasMany()) tacoSoupC.data.ingredients = ['X', 'Y'];
+  if (savingHasMany()) {tacoSoupC.data.ingredients = ['X', 'Y'];}
 
   const tacoSoupD = { _id: 'taco-soup_2_D', data: { flavor: 'black bean' } };
-  if (savingHasMany()) tacoSoupD.data.ingredients = ['Z'];
+  if (savingHasMany()) {tacoSoupD.data.ingredients = ['Z'];}
 
   const foodItemX = {
     _id: 'food-item_2_X',
@@ -280,7 +281,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
         _id: 'taco-soup_2_C',
         data: { flavor: 'al pastor' },
       };
-      if (savingHasMany()) soupDocument.data.ingredients = [];
+      if (savingHasMany()) {soupDocument.data.ingredients = [];}
       await this.db().bulkDocs([soupDocument]);
 
       const tacoSoup = await this.store().findRecord('taco-soup', 'C');
@@ -290,7 +291,7 @@ module('Integration | Adapter | Basic CRUD Ops', function (hooks) {
       });
 
       await newIngredient.save();
-      if (savingHasMany()) await tacoSoup.save();
+      if (savingHasMany()) {await tacoSoup.save();}
 
       this.store().unloadAll();
       const reloadedTacoSoup = await this.store().findRecord('taco-soup', 'C');

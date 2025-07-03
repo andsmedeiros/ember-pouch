@@ -31,6 +31,13 @@ export default class ApplicationAdapter extends Adapter {
     super(owner, createDatabase());
   }
 
+  async onChange(target) {
+    await super.onChange(target);
+    this.#eventRelay.dispatchEvent(
+      new CustomEvent('change', { detail: target }),
+    );
+  }
+
   prepare(store, type) {
     const { async = true, saveHasMany = false } = config.emberPouch ?? {};
     for (const [_name, relationship] of type.relationshipsByName) {
@@ -42,13 +49,6 @@ export default class ApplicationAdapter extends Adapter {
     }
 
     return super.prepare(store, type);
-  }
-
-  async onChange(target) {
-    await super.onChange(target);
-    this.#eventRelay.dispatchEvent(
-      new CustomEvent('change', { detail: target }),
-    );
   }
 
   waitForChangeWithID(id) {

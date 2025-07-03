@@ -1,7 +1,7 @@
 import {
-  macroCondition,
   dependencySatisfies,
   importSync,
+  macroCondition,
 } from '@embroider/macros';
 
 const { StringTransform } = (function () {

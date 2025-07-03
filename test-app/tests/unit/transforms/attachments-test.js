@@ -1,6 +1,6 @@
 import { getOwner } from '@ember/owner';
-import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
+import { module, test } from 'qunit';
 
 const testSerializedData = {
   'hello.txt': {
