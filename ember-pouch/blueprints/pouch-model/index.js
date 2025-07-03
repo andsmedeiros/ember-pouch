@@ -1,9 +1,5 @@
-var ModelBlueprint;
-
-try {
-  ModelBlueprint = require('ember-data/blueprints/model');
-} catch (e) {
-  ModelBlueprint = require('ember-cli/blueprints/model');
-}
-
-module.exports = ModelBlueprint;
+module.exports = {
+  ...require('ember-data/blueprints/model'),
+  description: 'Generates an Ember-pouch model.',
+  root: __dirname,
+};

@@ -1,52 +1,42 @@
-import { assert } from '@ember/debug';
-import { isEmpty } from '@ember/utils';
-import { Adapter } from 'ember-pouch';
-import HttpPouch from 'pouchdb-adapter-http';
-import indexeddb from 'pouchdb-adapter-indexeddb';
-import PouchDB from 'pouchdb-core';
-import PouchDBFind from 'pouchdb-find';
-import mapreduce from 'pouchdb-mapreduce';
-import replication from 'pouchdb-replication';
-import PouchDBRelational from 'relational-pouch';
-
 import config from '<%= dasherizedPackageName %>/config/environment';
+import { Adapter, PouchDB } from 'ember-pouch';
+import { assert } from '@ember/debug';
+import { isPresent } from '@ember/utils';
 
-PouchDB.plugin(PouchDBFind)
-  .plugin(PouchDBRelational)
-  .plugin(indexeddb)
-  .plugin(HttpPouch)
-  .plugin(mapreduce)
-  .plugin(replication);
+const localDatabasePath = config.emberPouch?.localDb;
+assert(
+  '<%= classifiedModuleName %>Adapter is configured to load the database path from ' +
+  'config.emberPouch.localDb, but this was not set. \n' +
+  'Either configure the local database path or manually override this setting',
+  isPresent(localDatabasePath)
+);
 
-export default class ApplicationAdapter extends Adapter {
+const localDatabase = new PouchDB(localDatabasePath);
 
-  constructor() {
-    super(...arguments);
+export default class <%= classifiedModuleName %>Adapter extends Adapter {
+  constructor(owner) {
+    super(owner, localDatabase);
 
-    const localDb = config.emberPouch.localDb;
+    if (isPresent(config.emberPouch?.remoteDb)) {
+      const remoteDatabase = new PouchDB(config.emberPouch.remoteDb);
 
-    assert('emberPouch.localDb must be set', !isEmpty(localDb));
-
-    const db = new PouchDB(localDb);
-    this.db = db;
-
-    // If we have specified a remote CouchDB instance, then replicate our local database to it
-    if (config.emberPouch.remoteDb) {
-      let remoteDb = new PouchDB(config.emberPouch.remoteDb);
-
-      db.sync(remoteDb, {
+      localDatabase.sync(remoteDatabase, {
         live: true,
         retry: true
       });
     }
-
-    return this;
   }
 
-  unloadedDocumentChanged(obj) {
-    let recordTypeName = this.getRecordTypeName(this.store.modelFor(obj.type));
-    this.db.rel.find(recordTypeName, obj.id).then((doc) => {
-      this.store.pushPayload(recordTypeName, doc);
-    });
-  }
+  // By default, Ember-pouch does not push changes from records not tracked
+  // by EmberData into the store, even though they are stored into the local
+  // database.
+  // If you wish to override this method and immediately load any changes into
+  // EmberData's store, even for records not queried yet, uncomment the
+  // following method.
+
+  // async unloadedDocumentChanged(obj) {
+  //   const recordTypeName = this.getRecordTypeName(this.store.modelFor(obj.type));
+  //   const doc = await this.db.rel.find(recordTypeName, obj.id)
+  //   this.store.pushPayload(recordTypeName, doc);
+  // }
 }
