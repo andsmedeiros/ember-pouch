@@ -1,6 +1,4 @@
-import Adapter from './adapters/pouch';
-import Model from './models/pouch';
-import PouchDB from './pouchdb';
-import Serializer from './serializers/pouch';
-
-export { Adapter, Model, PouchDB,Serializer };
+export { default as Adapter } from './adapters/pouch.js';
+export { default as Model } from './models/pouch.js';
+export { default as PouchDB } from './pouchdb.js';
+export { default as Serializer } from './serializers/pouch.js';

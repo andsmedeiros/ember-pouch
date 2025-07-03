@@ -1,6 +1,6 @@
 import RESTSerializer from '@ember-data/serializer/rest';
 
-import { shouldSaveRelationship } from '../utils';
+import { shouldSaveRelationship } from '../utils.js';
 
 export default class PouchSerializer extends RESTSerializer {
   #isAttachment(attribute) {
@@ -71,9 +71,9 @@ shouldSerializeHasMany(snapshot, key, relationship) {
     return shouldSaveRelationship(this, relationship);
   }
 
-  
 
-  
 
-  
+
+
+
 }

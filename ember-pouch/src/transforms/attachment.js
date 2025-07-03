@@ -1,6 +1,6 @@
 import { isNone } from '@ember/utils';
 
-import AttachmentsTransform from './attachments';
+import AttachmentsTransform from './attachments.js';
 
 export default class AttachmentTransform extends AttachmentsTransform {
   deserialize(serialized) {
