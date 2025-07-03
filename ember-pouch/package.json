@@ -94,7 +94,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./pouchdb": "./dist/pouchdb.js",
-    "./transforms/*.js": "./dist/transforms/*.js",
+    "./transforms/*": "./dist/transforms/*.js",
     "./addon-main.js": "./addon-main.cjs"
   },
   "files": [
