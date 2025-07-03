@@ -71,12 +71,12 @@
     "stylelint": "^16.19.1"
   },
   "peerDependencies": {
-    "ember-data": ">=5.0.0",
-    "ember-source": ">=5.0.0",
-    "@ember/string": ">=3.0.0",
     "@ember-data/adapter": ">=5.0.0",
     "@ember-data/model": ">=5.0.0",
-    "@ember-data/serializer": ">=5.0.0"
+    "@ember-data/serializer": ">=5.0.0",
+    "@ember/string": ">=3.0.0",
+    "ember-data": ">=5.0.0",
+    "ember-source": ">=5.0.0"
   },
   "engines": {
     "node": ">=18 <22"
@@ -93,7 +93,8 @@
   "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac",
   "exports": {
     ".": "./dist/index.js",
-    "./*": "./dist/*.js",
+    "./pouchdb": "./dist/pouchdb.js",
+    "./transforms/*.js": "./dist/transforms/*.js",
     "./addon-main.js": "./addon-main.cjs"
   },
   "files": [
