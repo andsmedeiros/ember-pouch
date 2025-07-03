@@ -35,7 +35,7 @@ jobs:
       - name: Lint
         run: pnpm lint
       - name: Run Tests
-        run: pnpm test:ember
+        run: pnpm test
 
   floating:
     name: 'Floating Dependencies'
@@ -55,7 +55,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-lockfile
       - name: Run Tests
-        run: npm run test:ember
+        run: npm run test
 
   try-scenarios:
     name: ${{ matrix.try-scenario }}
@@ -94,4 +94,4 @@ jobs:
           pnpm install
           fi
       - name: Run Tests
-        run: ./node_modules/.bin/ember try:one ${{ matrix.try-scenario }}
+        run: pnpm --filter test-app test:ember-compatibility ${{ matrix.try-scenario }}
